@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JVM GC Log Analyzer</title>
+
+  <!-- Rhapsody mandatory typeface: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       Rhapsody Design Tokens
+       ------------------------------------------------------------
+       Core
+         Primary Blue   #1A81F4   primary actions, links, key highlights
+         Ink            #050F19   primary text
+         White          #FFFFFF   page and card backgrounds
+       Neutrals
+         Gray           #7E858C   secondary text, subtle UI elements
+         Light Gray     #D9DFE6   borders, dividers, subtle backgrounds
+       Semantic accents (status only)
+         Info Teal      #23C5BF
+         Warning Orange #FA7E2E
+         Accent Purple  #7340E4
+         Error Red      #D64545
+         Warning Yellow #FFC857
+         Success Green  #2FAD68
+       Derived
+         Soft Fill      #F4F6F8   soft neutral fill for nested panels
+       ============================================================ */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary-blue:    #1A81F4;
+      --ink:             #050F19;
+      --white:           #FFFFFF;
+
+      --gray:            #7E858C;
+      --light-gray:      #D9DFE6;
+
+      --info-teal:       #23C5BF;
+      --warning-orange:  #FA7E2E;
+      --accent-purple:   #7340E4;
+      --error-red:       #D64545;
+      --warning-yellow:  #FFC857;
+      --success-green:   #2FAD68;
+
+      --soft-fill:       #F4F6F8;
+
+      --radius:          10px;
+    }
+
+    /* ── Typography (Poppins, role-based) ─────────────────── */
+    body {
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-weight: 400;
+      font-size: 1rem;          /* Body */
+      line-height: 1.55;
+      background: var(--white);
+      color: var(--ink);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    header {
+      background: var(--primary-blue);
+      color: var(--white);
+      padding: 2.6rem 1.5rem 2.2rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 1.875rem;      /* Heading 1 */
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    header p {
+      margin-top: .55rem;
+      font-size: .9rem;
+      font-weight: 400;
+      opacity: .92;
+    }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: .78rem;        /* Heading 4 — small section header */
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--gray);
+      margin-bottom: 1rem;
+      padding-bottom: .55rem;
+      border-bottom: 1px solid var(--light-gray);
+    }
+
+    /* ── Section divider (Heading 2) ──────────────────────── */
+    .section-divider {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 2rem 0 1.25rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px solid var(--light-gray);
+      letter-spacing: -.01em;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .section-divider::before {
+      content: '';
+      display: inline-block;
+      width: 4px; height: 1.15em;
+      background: var(--primary-blue);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Upload ───────────────────────────────────────────── */
+    #drop-area {
+      border: 2px dashed var(--light-gray);
+      border-radius: var(--radius);
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      background: var(--soft-fill);
+      user-select: none;
+    }
+    #drop-area:hover, #drop-area.over {
+      border-color: var(--primary-blue);
+      background: var(--white);
+    }
+    .upload-icon {
+      width: 48px; height: 48px;
+      color: var(--gray);
+      margin: 0 auto 1rem;
+      display: block;
+      stroke-width: 1.4;        /* consistent line-icon stroke */
+    }
+    .upload-main { font-size: 1rem; color: var(--ink); }
+    .upload-browse {
+      color: var(--primary-blue);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .upload-sub {
+      font-size: .78rem;        /* Label */
+      color: var(--gray);
+      margin-top: .6rem;
+      line-height: 1.8;
+    }
+    #file-input { display: none; }
+
+    /* File pill — neutral surface (selection is informational, not a status) */
+    #file-pill {
+      display: none;
+      align-items: center;
+      gap: .6rem;
+      margin-top: 1rem;
+      padding: .65rem 1rem;
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      font-size: .875rem;
+      color: var(--ink);
+    }
+    #file-pill.show { display: flex; }
+    #file-pill strong {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    #file-pill svg { color: var(--gray); flex-shrink: 0; }
+
+    /* Primary button — single primary action per surface */
+    #analyze-btn {
+      display: none;
+      width: 100%;
+      margin-top: 1rem;
+      padding: .9rem;
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;         /* Button */
+      cursor: pointer;
+      transition: background .15s;
+    }
+    #analyze-btn.show { display: block; }
+    #analyze-btn:hover:not(:disabled) { background: #1670d8; }
+    #analyze-btn:disabled { background: var(--gray); cursor: not-allowed; }
+
+    /* Error — Error Red as a left rule on a neutral surface */
+    #err-box {
+      display: none;
+      margin-top: 1rem;
+      padding: .85rem 1rem;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-left: 3px solid var(--error-red);
+      border-radius: 8px;
+      color: var(--ink);
+      font-size: .875rem;
+    }
+    #err-box.show { display: block; }
+
+    /* ── Throughput image analysis ────────────────────────── */
+    .thr-help {
+      font-size: .875rem;
+      color: var(--gray);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .thr-help strong {
+      color: var(--ink);
+      font-weight: 600;
+      background: var(--soft-fill);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: .82rem;
+    }
+    .thr-input-row {
+      display: flex;
+      gap: .6rem;
+      align-items: stretch;
+    }
+    @media (max-width: 680px) { .thr-input-row { flex-direction: column; } }
+
+    #thr-folder, #heap-folder {
+      flex: 1;
+      padding: .8rem 1rem;
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: .95rem;
+      color: var(--ink);
+      background: var(--white);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #thr-folder:focus, #heap-folder:focus {
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 3px rgba(26, 129, 244, 0.12);
+    }
+    #thr-btn, #heap-btn {
+      padding: .8rem 1.4rem;
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    #thr-btn:hover:not(:disabled), #heap-btn:hover:not(:disabled) { background: #1670d8; }
+    #thr-btn:disabled, #heap-btn:disabled { background: var(--gray); cursor: not-allowed; }
+
+    #thr-err, #heap-err {
+      display: none;
+      margin-top: 1rem;
+      padding: .85rem 1rem;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-left: 3px solid var(--error-red);
+      border-radius: 8px;
+      color: var(--ink);
+      font-size: .875rem;
+    }
+    #thr-err.show, #heap-err.show { display: block; }
+
+    #thr-loading, #heap-loading { display: none; text-align: center; padding: 2.5rem 1rem; }
+    #thr-loading.show, #heap-loading.show { display: block; }
+
+    #thr-results, #heap-results { display: none; }
+    #thr-results.show, #heap-results.show { display: block; }
+
+    .thr-folder-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      padding: .4rem .9rem;
+      font-size: .82rem;
+      color: var(--ink);
+      font-weight: 500;
+      margin-bottom: 1.25rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .thr-section-title {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--gray);
+      margin: 1.1rem 0 .55rem;
+    }
+    .thr-trend-pill {
+      display: inline-block;
+      padding: .22rem .7rem;
+      border-radius: 9999px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      border: 1px solid var(--light-gray);
+      background: var(--white);
+      color: var(--ink);
+    }
+    .thr-trend-Stable      { color: var(--success-green); border-color: var(--success-green); }
+    .thr-trend-Increasing  { color: var(--primary-blue);  border-color: var(--primary-blue); }
+    .thr-trend-Decreasing  { color: var(--error-red);     border-color: var(--error-red); }
+    .thr-trend-Fluctuating { color: var(--warning-orange);border-color: var(--warning-orange); }
+    .thr-trend-Anomaly     { color: var(--warning-orange);border-color: var(--warning-orange); }
+
+    .thr-image-wrap {
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius);
+      padding: .5rem;
+      background: var(--soft-fill);
+      margin-bottom: 1rem;
+    }
+    .thr-image-wrap img { width: 100%; display: block; border-radius: 6px; }
+
+    .thr-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: .65rem;
+      margin-bottom: .25rem;
+    }
+    .thr-metric {
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      padding: .55rem .7rem;
+      text-align: center;
+    }
+    .thr-metric-val {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .thr-metric-lab {
+      font-size: .62rem;
+      color: var(--gray);
+      margin-top: .15rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .thr-interp-list,
+    .thr-rec-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .thr-interp-list li,
+    .thr-rec-list li {
+      padding: .7rem .9rem;
+      border: 1px solid var(--light-gray);
+      border-left: 3px solid var(--primary-blue);
+      border-radius: 7px;
+      background: var(--white);
+      font-size: .875rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .thr-rec-list li { border-left-color: var(--info-teal); }
+
+    .thr-missing {
+      margin-top: .75rem;
+      padding: .6rem .9rem;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-left: 3px solid var(--warning-yellow);
+      border-radius: 8px;
+      font-size: .78rem;
+      color: var(--ink);
+    }
+
+    /* ── Loading ──────────────────────────────────────────── */
+    #loading { display: none; text-align: center; padding: 2.5rem 1rem; }
+    #loading.show { display: block; }
+    .spinner {
+      width: 42px; height: 42px;
+      border: 3px solid var(--light-gray);
+      border-top-color: var(--primary-blue);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto .875rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading p { color: var(--gray); font-size: .875rem; }
+
+    /* ── Results ──────────────────────────────────────────── */
+    #results { display: none; }
+    #results.show { display: block; }
+
+    .file-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      padding: .4rem .9rem;
+      font-size: .85rem;
+      color: var(--ink);
+      font-weight: 500;
+      margin-bottom: 1.5rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Overview tiles */
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+      gap: 1rem;
+    }
+    .ov-card {
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: var(--radius);
+      padding: 1rem .875rem;
+      text-align: center;
+    }
+    .ov-value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .ov-label {
+      font-size: .7rem;         /* Label */
+      color: var(--gray);
+      margin-top: .3rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Tables ───────────────────────────────────────────── */
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    thead th {
+      text-align: left;
+      padding: .55rem .75rem;
+      background: var(--soft-fill);
+      font-weight: 600;
+      color: var(--gray);
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    tbody td {
+      padding: .65rem .75rem;
+      border-bottom: 1px solid var(--light-gray);
+      color: var(--ink);
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    .td-label { color: var(--gray); }
+    .td-val   { font-weight: 600; color: var(--ink); }
+
+    /* GC type badges — categorical mapping using the approved semantic palette.
+       (Brand exception flagged: accents are normally status-only.) */
+    .gc-badge {
+      display: inline-block;
+      padding: .2rem .65rem;
+      border-radius: 9999px;
+      font-size: .72rem;
+      font-weight: 600;
+      border: 1px solid var(--light-gray);
+    }
+    .gc-Full        { color: var(--error-red);     border-color: var(--error-red); }
+    .gc-Young       { color: var(--primary-blue);  border-color: var(--primary-blue); }
+    .gc-Mixed       { color: var(--accent-purple); border-color: var(--accent-purple); }
+    .gc-Concurrent  { color: var(--success-green); border-color: var(--success-green); }
+    .gc-Unknown     { color: var(--gray);          border-color: var(--light-gray); }
+
+    /* Progress bar */
+    .prog-wrap { display: flex; align-items: center; gap: .5rem; }
+    .prog-bg   { flex: 1; height: 6px; background: var(--light-gray); border-radius: 9999px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 9999px; }
+    .prog-pct  { font-size: .75rem; color: var(--gray); white-space: nowrap; }
+
+    /* ── Observation items (status panels) ───────────────── */
+    .obs-list { list-style: none; display: flex; flex-direction: column; gap: .5rem; }
+    .obs-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .7rem;
+      padding: .8rem .9rem;
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      background: var(--white);
+      font-size: .875rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .obs-WARN { border-left: 3px solid var(--warning-orange); }
+    .obs-INFO { border-left: 3px solid var(--info-teal); }
+    .obs-OK   { border-left: 3px solid var(--success-green); }
+    .obs-tag {
+      font-size: .65rem;
+      font-weight: 600;
+      padding: .18rem .5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      margin-top: 2px;
+      flex-shrink: 0;
+      color: var(--white);
+      letter-spacing: .03em;
+    }
+    .obs-WARN .obs-tag { background: var(--warning-orange); }
+    .obs-INFO .obs-tag { background: var(--info-teal); }
+    .obs-OK   .obs-tag { background: var(--success-green); }
+
+    /* ── Charts ───────────────────────────────────────────── */
+    .chart-img { width: 100%; border-radius: 6px; display: block; }
+
+    /* Per-chart observations (same status-only convention) */
+    .chart-obs {
+      margin-top: 1rem;
+      border-top: 1px solid var(--light-gray);
+      padding-top: .875rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+    .chart-obs-title {
+      font-size: .7rem;         /* Label */
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--gray);
+      margin-bottom: .2rem;
+    }
+    .cobs-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .65rem .8rem;
+      border: 1px solid var(--light-gray);
+      border-radius: 7px;
+      background: var(--white);
+      font-size: .845rem;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .cobs-WARN { border-left: 3px solid var(--warning-orange); }
+    .cobs-INFO { border-left: 3px solid var(--info-teal); }
+    .cobs-OK   { border-left: 3px solid var(--success-green); }
+    .cobs-tag {
+      font-size: .62rem;
+      font-weight: 600;
+      padding: .14rem .42rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      margin-top: 2px;
+      flex-shrink: 0;
+      color: var(--white);
+      letter-spacing: .03em;
+    }
+    .cobs-WARN .cobs-tag { background: var(--warning-orange); }
+    .cobs-INFO .cobs-tag { background: var(--info-teal); }
+    .cobs-OK   .cobs-tag { background: var(--success-green); }
+
+    /* ── Unmatched note ──────────────────────────────────── */
+    .unmatched-note {
+      margin-top: .75rem;
+      padding: .6rem .9rem;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-left: 3px solid var(--warning-orange);
+      border-radius: 8px;
+      font-size: .78rem;
+      color: var(--ink);
+    }
+
+    /* ── Secondary button (white + Light Gray border + Ink text) ── */
+    .re-btn {
+      display: block;
+      margin: .5rem auto 2rem;
+      padding: .75rem 2rem;
+      background: var(--white);
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--ink);
+      transition: background .15s, border-color .15s;
+    }
+    .re-btn:hover { background: var(--soft-fill); border-color: var(--gray); }
+
+    /* ── KPI Summary layout ──────────────────────────────── */
+    .kpi-summary-header { margin-bottom: 1.25rem; }
+    .kpi-summary-title {
+      font-size: 1.15rem;       /* Heading 3 */
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .kpi-summary-title svg { color: var(--primary-blue); }
+    .kpi-summary-sub {
+      font-size: .78rem;
+      color: var(--gray);
+      margin-top: .3rem;
+    }
+    .kpi-summary-body {
+      display: grid;
+      grid-template-columns: minmax(220px, 2fr) 3fr;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 720px) { .kpi-summary-body { grid-template-columns: 1fr; } }
+
+    .kpi-metric-row { display: flex; align-items: center; gap: .55rem; padding: .35rem 0; }
+    .kpi-metric-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--ink);
+      color: var(--white);
+      font-size: .68rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .kpi-metric-lbl { font-size: .85rem; color: var(--ink); flex: 1; }
+    .kpi-metric-val { font-size: .9rem; font-weight: 700; color: var(--ink); }
+
+    .kpi-latency-sub {
+      margin: .3rem 0 .5rem 1.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+    }
+    .kpi-lat-row {
+      display: flex;
+      align-items: center;
+      background: var(--soft-fill);
+      border: 1px solid var(--light-gray);
+      border-radius: 6px;
+      padding: .45rem .75rem;
+      gap: .6rem;
+    }
+    .kpi-lat-lbl { font-size: .8rem; color: var(--ink); flex: 1; }
+    .kpi-lat-val { font-size: .82rem; font-weight: 600; color: var(--ink); white-space: nowrap; }
+
+    .kpi-range-lbl {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin: .65rem 0 .4rem;
+    }
+    .kpi-range-tbl { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    .kpi-range-tbl thead th {
+      background: var(--soft-fill);
+      color: var(--gray);
+      padding: .5rem .65rem;
+      font-size: .72rem;
+      font-weight: 600;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    .kpi-range-tbl tbody td {
+      padding: .5rem .65rem;
+      border-bottom: 1px solid var(--light-gray);
+      color: var(--ink);
+    }
+    .kpi-range-tbl tbody tr:last-child td { border-bottom: none; }
+
+    /* ── G1 GC Time ──────────────────────────────────────── */
+    .g1-charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 680px) { .g1-charts { grid-template-columns: 1fr; } }
+    .g1-chart-box {
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      padding: .75rem;
+      text-align: center;
+      background: var(--soft-fill);
+    }
+    .g1-chart-box img { width: 100%; border-radius: 4px; }
+
+    .g1-tables {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 680px) { .g1-tables { grid-template-columns: 1fr; } }
+    .g1-tbl-title {
+      font-size: .9rem;         /* Heading 4 */
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: .6rem;
+    }
+    .g1-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .g1-tbl td {
+      padding: .55rem .8rem;
+      color: var(--ink);
+      border-bottom: 1px solid var(--light-gray);
+    }
+    .g1-tbl tbody tr:last-child td { border-bottom: none; }
+    .g1-tbl tbody tr td:first-child {
+      background: var(--soft-fill);
+      color: var(--ink);
+      font-weight: 600;
+      width: 60%;
+      border-right: 1px solid var(--light-gray);
+    }
+    .g1-tbl tbody tr td:not(:first-child) { background: var(--white); }
+
+    /* ── G1 Collection Phases ────────────────────────────── */
+    .phases-charts {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 720px) { .phases-charts { grid-template-columns: 1fr; } }
+    .phases-chart-box {
+      border: 1px solid var(--light-gray);
+      border-radius: 8px;
+      padding: .75rem;
+      background: var(--soft-fill);
+    }
+    .phases-chart-box img { width: 100%; border-radius: 4px; }
+    .phases-tbl { width: 100%; border-collapse: collapse; font-size: .81rem; }
+    .phases-tbl thead th {
+      background: var(--soft-fill);
+      padding: .55rem .75rem;
+      color: var(--gray);
+      font-weight: 600;
+      font-size: .72rem;
+      text-align: left;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    .phases-tbl tbody tr td { background: var(--white); }
+    .phases-tbl tbody tr:nth-child(odd) td { background: var(--soft-fill); }
+    .phases-tbl td {
+      padding: .55rem .75rem;
+      border-bottom: 1px solid var(--light-gray);
+      color: var(--ink);
+    }
+    .phases-tbl td:first-child { font-weight: 600; color: var(--ink); }
+    .phases-tbl tbody tr:last-child td { border-bottom: none; }
+    .phases-dot {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-right: .4rem;
+      vertical-align: middle;
+    }
+
+    /* ── PDF button — primary action of the results surface ── */
+    .pdf-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: .75rem;
+      background: var(--primary-blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      padding: .8rem 2rem;
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .pdf-btn:hover:not(:disabled) { background: #1670d8; }
+    .pdf-btn:disabled { opacity: .65; cursor: not-allowed; }
+
+    /* ── Form controls (selects) — input rules ───────────── */
+    select {
+      font-family: inherit;
+      background: var(--white);
+      color: var(--ink);
+      border: 1px solid var(--light-gray);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    select:focus { outline: none; border-color: var(--primary-blue); }
+
+    /* Chart viewer header row */
+    .chart-viewer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: .6rem;
+      border-bottom: 1px solid var(--light-gray);
+    }
+    .chart-viewer-head .label {
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      color: var(--gray);
+    }
+    .chart-viewer-head select {
+      font-size: .85rem;
+      font-weight: 500;
+      padding: .45rem .8rem;
+      min-width: 180px;
+    }
+
+    /* KPI obs section */
+    .kpi-obs-wrap {
+      margin-top: 1.25rem;
+      border-top: 1px solid var(--light-gray);
+      padding-top: 1rem;
+    }
+    .kpi-obs-wrap .group-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--gray);
+      margin-bottom: .4rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>JVM GC Log Analyzer</h1>
+  <p>Upload a GC log to profile memory behavior, garbage collection efficiency, and key performance indicators</p>
+</header>
+
+<main>
+
+  <!-- Upload -->
+  <div class="card">
+    <div id="drop-area" onclick="document.getElementById('file-input').click()">
+      <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+           viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
+                 01.707.293l5.414 5.414A1 1 0 0119 9.414V19a2 2 0 01-2 2z"/>
+      </svg>
+      <p class="upload-main">
+        Drop your GC log here, or
+        <label class="upload-browse" for="file-input" onclick="event.stopPropagation()">browse</label>
+      </p>
+      <p class="upload-sub">
+        JDK 8 -XX:+PrintGCDetails &nbsp;·&nbsp; JDK 9+ -Xlog:gc*
+        &nbsp;·&nbsp; G1GC &nbsp;·&nbsp; ZGC &nbsp;·&nbsp; Shenandoah<br>
+        <span style="display:inline-block;margin-top:.2rem">.log / .txt — up to 50 MB</span>
+      </p>
+      <input type="file" id="file-input" accept=".log,.txt,.out">
+    </div>
+
+    <div id="file-pill">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M6 3h6l4 4v9a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v4h4"/>
+      </svg>
+      <strong id="pill-name"></strong>
+      <span style="font-size:.78rem;color:var(--success-green);flex-shrink:0;font-weight:500" id="pill-size"></span>
+    </div>
+
+    <div id="err-box"></div>
+    <button id="analyze-btn" onclick="runAnalysis()">Analyze GC Log</button>
+  </div>
+
+  <!-- Throughput image analysis -->
+  <div class="card">
+    <div class="card-title">Throughput Image Analysis</div>
+    <p class="thr-help">
+      Provide the folder containing the throughput screenshots exported from the Management Console.
+      The analyzer will look for <strong>Throughput_30days.png</strong>, <strong>Throughput_7days.png</strong>,
+      and <strong>Throughput_24hours.png</strong>, identify each graph, and produce a detailed review of trends,
+      observations, recommendations, and a cross-window comparison covering long-term, weekly, and recent behaviour.
+    </p>
+    <div class="thr-input-row">
+      <input type="text" id="thr-folder"
+             placeholder="e.g. C:\exports\mgmt-console\" autocomplete="off">
+      <button id="thr-btn" onclick="runThroughputAnalysis()">Analyze Throughput Images</button>
+    </div>
+    <div id="thr-err"></div>
+  </div>
+
+  <!-- Throughput loading -->
+  <div id="thr-loading" class="card">
+    <div class="spinner"></div>
+    <p>Reading throughput images and computing trend metrics&hellip;</p>
+  </div>
+
+  <!-- Throughput results -->
+  <div id="thr-results"></div>
+
+  <!-- Heap Memory image analysis -->
+  <div class="card">
+    <div class="card-title">Heap Memory Image Analysis</div>
+    <p class="thr-help">
+      Provide the folder containing the heap memory screenshots exported from the Management Console.
+      The analyzer will look for <strong>HeapMemory_30days.png</strong>, <strong>HeapMemory_7days.png</strong>,
+      and <strong>HeapMemory_24hours.png</strong>, identify each graph, and produce a detailed review of
+      heap usage trends, observations, recommendations, and a cross-window comparison covering long-term,
+      weekly, and recent memory behaviour.
+    </p>
+    <div class="thr-input-row">
+      <input type="text" id="heap-folder"
+             placeholder="e.g. C:\exports\mgmt-console\" autocomplete="off">
+      <button id="heap-btn" onclick="runHeapAnalysis()">Analyze Heap Memory Images</button>
+    </div>
+    <div id="heap-err"></div>
+  </div>
+
+  <!-- Heap loading -->
+  <div id="heap-loading" class="card">
+    <div class="spinner"></div>
+    <p>Reading heap memory images and computing trend metrics&hellip;</p>
+  </div>
+
+  <!-- Heap results -->
+  <div id="heap-results"></div>
+
+  <!-- Loading -->
+  <div id="loading" class="card">
+    <div class="spinner"></div>
+    <p>Parsing events and computing metrics&hellip;</p>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <div class="file-badge" id="res-filename"></div>
+
+    <!-- Overview -->
+    <div class="card">
+      <div class="card-title">Overview</div>
+      <div class="overview-grid" id="overview-grid"></div>
+      <div id="unmatched-note" class="unmatched-note" style="display:none"></div>
+    </div>
+
+    <!-- Breakdown + Pause -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">GC Event Breakdown</div>
+        <table>
+          <thead><tr><th>Type</th><th>Count</th><th>Share</th></tr></thead>
+          <tbody id="breakdown-body"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Pause Duration</div>
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody id="pause-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Heap metrics -->
+    <div class="card">
+      <div class="card-title">Heap Metrics</div>
+      <div class="two-col">
+        <table>
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody id="heap-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- JVM Memory Size -->
+    <div id="jvm-memory-section" style="display:none">
+      <div class="card" style="padding-bottom:1.25rem">
+        <div class="card-title">JVM Memory Size</div>
+        <img id="jvm-memory-chart" style="width:100%;max-width:680px;display:block;margin:0 auto"
+             alt="JVM Memory Size - Allocated vs Peak">
+      </div>
+    </div>
+
+    <!-- Observations -->
+    <div class="card">
+      <div class="card-title">Observations &amp; Anomalies</div>
+      <ul class="obs-list" id="obs-list"></ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         KPI Dashboard
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="kpi-section" style="display:none">
+      <div class="section-divider">KPI Dashboard</div>
+      <div class="card">
+        <div class="kpi-summary-header">
+          <div class="kpi-summary-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            Key Performance Indicators
+          </div>
+          <div class="kpi-summary-sub">Important section of the report — key JVM GC health signals</div>
+        </div>
+        <div class="kpi-summary-body">
+          <!-- Left: metrics + table -->
+          <div>
+            <div class="kpi-metric-row">
+              <span class="kpi-metric-num">1</span>
+              <span class="kpi-metric-lbl">Throughput</span>
+              <span class="kpi-metric-val" id="kpi-sum-throughput">—</span>
+            </div>
+            <div class="kpi-metric-row">
+              <span class="kpi-metric-num">2</span>
+              <span class="kpi-metric-lbl">CPU Time</span>
+              <span class="kpi-metric-val" id="kpi-sum-cpu">—</span>
+            </div>
+            <div class="kpi-metric-row">
+              <span class="kpi-metric-num">3</span>
+              <span class="kpi-metric-lbl">Latency:</span>
+            </div>
+            <div class="kpi-latency-sub">
+              <div class="kpi-lat-row">
+                <span class="kpi-lat-lbl">Avg Pause GC Time</span>
+                <span class="kpi-lat-val" id="kpi-sum-avg">—</span>
+              </div>
+              <div class="kpi-lat-row">
+                <span class="kpi-lat-lbl">Max Pause GC Time</span>
+                <span class="kpi-lat-val" id="kpi-sum-max">—</span>
+              </div>
+            </div>
+            <div class="kpi-range-lbl"
+                 style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+              <span style="margin-right:.2rem;">GC Pause Duration Time Range:</span>
+              <input type="number" id="kpi-bucket-size" value="1" min="0" step="any"
+                     style="width:64px;font-size:.78rem;padding:.3rem .45rem;
+                            border:1px solid var(--light-gray);border-radius:6px;
+                            font-family:inherit;color:var(--ink);background:var(--white);">
+              <select id="kpi-bucket-unit"
+                      style="font-size:.78rem;padding:.3rem .5rem;
+                             border:1px solid var(--light-gray);border-radius:6px;
+                             background:var(--white);color:var(--ink);">
+                <option value="sec" selected>sec</option>
+                <option value="ms">ms</option>
+              </select>
+              <button id="kpi-bucket-change-btn" type="button"
+                      onclick="changeBucketSize()"
+                      style="font-size:.78rem;font-weight:600;padding:.3rem .85rem;
+                             background:var(--error-red);color:var(--white);
+                             border:none;border-radius:6px;cursor:pointer;">
+                Change
+              </button>
+            </div>
+            <table class="kpi-range-tbl">
+              <thead>
+                <tr>
+                  <th id="kpi-duration-th">Duration (sec)</th>
+                  <th>No. of GCs</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody id="kpi-bucket-body"></tbody>
+            </table>
+          </div>
+          <!-- Right: horizontal bar chart -->
+          <div>
+            <img id="kpi-summary-chart" class="chart-img" alt="GC Duration Time Range chart">
+          </div>
+        </div>
+
+        <!-- KPI Observations -->
+        <div id="kpi-obs-section" class="kpi-obs-wrap" style="display:none;">
+          <div class="chart-obs-title" style="margin-bottom:.6rem;">KPI Observations</div>
+          <div id="kpi-obs-body" style="display:flex;flex-direction:column;gap:.75rem;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Combined chart viewer -->
+    <div class="card" id="chart-viewer-card" style="display:none">
+      <div class="chart-viewer-head">
+        <span class="label">GC Analysis</span>
+        <select id="chart-selector" onchange="switchChart()">
+          <option value="after">Heap After GC</option>
+          <option value="before">Heap Before GC</option>
+          <option value="duration">GC Duration</option>
+          <option value="reclaimed">Reclaimed Bytes</option>
+          <option value="pause_gc">Pause GC Duration</option>
+        </select>
+      </div>
+      <img id="chart-viewer-img" class="chart-img" alt="GC chart">
+      <div class="chart-obs" id="chart-viewer-obs"></div>
+    </div>
+
+    <!-- G1 Collection Phases Statistics -->
+    <div id="g1-phases-section" style="display:none">
+      <div class="section-divider">G1 Collection Phases Statistics</div>
+      <div class="card">
+        <div class="phases-charts">
+          <div class="phases-chart-box">
+            <img id="g1-phases-bar" alt="Avg Time (ms) per phase">
+          </div>
+          <div class="phases-chart-box" style="text-align:center">
+            <img id="g1-phases-pie" alt="Cumulative Time (Secs) per phase">
+          </div>
+        </div>
+        <table class="phases-tbl">
+          <thead>
+            <tr>
+              <th></th>
+              <th><span class="phases-dot" style="background:var(--primary-blue)"></span>Young GC</th>
+              <th><span class="phases-dot" style="background:var(--info-teal)"></span>Remark</th>
+              <th><span class="phases-dot" style="background:var(--accent-purple)"></span>Cleanup</th>
+            </tr>
+          </thead>
+          <tbody id="g1-phases-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- G1 GC Time -->
+    <div id="g1-section" style="display:none">
+      <div class="section-divider">G1 GC Time</div>
+      <div class="card">
+        <div class="g1-charts">
+          <div class="g1-chart-box">
+            <img id="g1-pie-chart" alt="Pause concurrent total time">
+          </div>
+          <div class="g1-chart-box">
+            <img id="g1-bar-chart" alt="Pause concurrent avg time">
+          </div>
+        </div>
+        <div class="g1-tables">
+          <div>
+            <div class="g1-tbl-title">Pause Time</div>
+            <table class="g1-tbl"><tbody id="g1-pause-body"></tbody></table>
+          </div>
+          <div>
+            <div class="g1-tbl-title">Concurrent Time</div>
+            <table class="g1-tbl"><tbody id="g1-conc-body"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="pdf-btn" id="pdf-btn" onclick="downloadReport()">&#8595; Download PDF Report</button>
+    <button class="re-btn" onclick="reset()">Analyze Another File</button>
+  </div>
+
+</main>
+
+<script>
+  const dropArea  = document.getElementById('drop-area');
+  const fileInput = document.getElementById('file-input');
+  let activeFile  = null;
+  let _charts = {};
+
+  // ── GC Pause Duration Time Range — GCeasy-style configurable bucketing ─
+  function renderBuckets(bucketData) {
+    // bucketData is the dict {unit, size_ms, rows} from the server (or legacy list).
+    const rows = (bucketData && bucketData.rows) ? bucketData.rows
+               : Array.isArray(bucketData) ? bucketData : [];
+    const unit = (bucketData && bucketData.unit) ? bucketData.unit : 'sec';
+    document.getElementById('kpi-duration-th').textContent = `Duration (${unit})`;
+    document.getElementById('kpi-bucket-body').innerHTML = rows
+      .filter(b => b.count > 0)
+      .map(b => `<tr>
+                   <td>${na(b.range)}</td>
+                   <td>${b.count}</td>
+                   <td>${b.pct != null ? b.pct + '%' : 'N/A'}</td>
+                 </tr>`)
+      .join('');
+  }
+
+  async function changeBucketSize() {
+    const sizeRaw = document.getElementById('kpi-bucket-size').value;
+    const unit    = document.getElementById('kpi-bucket-unit').value;
+    const size    = parseFloat(sizeRaw);
+    if (!size || size <= 0 || !isFinite(size)) {
+      alert('Please enter a positive bucket size.');
+      return;
+    }
+    const sizeMs = unit === 'sec' ? size * 1000 : size;
+
+    const btn  = document.getElementById('kpi-bucket-change-btn');
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      const resp = await fetch('/rebucket', {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify({ bucket_ms: sizeMs }),
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.error) {
+        alert('Re-bucket failed: ' + (data.error || resp.statusText));
+        return;
+      }
+      renderBuckets(data.duration_buckets);
+      if (data.kpi_summary_chart) {
+        document.getElementById('kpi-summary-chart').src = data.kpi_summary_chart;
+      }
+    } catch (e) {
+      alert('Network error: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
+
+  // Drag & drop
+  ['dragenter','dragover'].forEach(ev =>
+    dropArea.addEventListener(ev, e => { e.preventDefault(); dropArea.classList.add('over'); })
+  );
+  ['dragleave','drop'].forEach(ev =>
+    dropArea.addEventListener(ev, e => { e.preventDefault(); dropArea.classList.remove('over'); })
+  );
+  dropArea.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) pickFile(f); });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) pickFile(fileInput.files[0]); });
+
+  function pickFile(f) {
+    activeFile = f;
+    document.getElementById('pill-name').textContent = f.name;
+    document.getElementById('pill-size').textContent = fmtBytes(f.size);
+    show('file-pill'); show('analyze-btn');
+    hide('err-box'); hide('results');
+  }
+  function fmtBytes(b) {
+    if (b < 1024)    return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+
+  // Analysis
+  async function runAnalysis() {
+    if (!activeFile) return;
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = true; btn.textContent = 'Analyzing...';
+    show('loading'); hide('err-box'); hide('results');
+
+    const fd = new FormData();
+    fd.append('gclog', activeFile);
+    try {
+      const res  = await fetch('/analyze', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok || data.error) showErr(data.error || 'Analysis failed.');
+      else render(data);
+    } catch(e) {
+      showErr('Network error: ' + e.message);
+    } finally {
+      hide('loading');
+      btn.disabled = false; btn.textContent = 'Analyze GC Log';
+    }
+  }
+  function showErr(msg) {
+    const el = document.getElementById('err-box');
+    el.textContent = msg; show('err-box');
+  }
+
+  // Render — Rhapsody token-based category palette
+  // (categorical, not status — documented brand exception)
+  const TYPE_COLOR = {
+    Full:       '#D64545',   // Error Red
+    Young:      '#1A81F4',   // Primary Blue
+    Mixed:      '#7340E4',   // Accent Purple
+    Concurrent: '#2FAD68',   // Success Green
+    Unknown:    '#7E858C'    // Gray
+  };
+
+  function na(v) {
+    return (v === null || v === undefined || v === '' || v === 'null' || v === 'undefined') ? 'N/A' : v;
+  }
+
+  function render(d) {
+    document.getElementById('res-filename').textContent = d.filename;
+
+    // Overview
+    document.getElementById('overview-grid').innerHTML = (d.overview || []).map(m => `
+      <div class="ov-card">
+        <div class="ov-value">${na(m.value)}</div>
+        <div class="ov-label">${na(m.label)}</div>
+      </div>`).join('');
+
+    // Unmatched
+    const un = document.getElementById('unmatched-note');
+    if (d.unmatched_count > 0) {
+      un.textContent = `${d.unmatched_count} line(s) resembled GC events but matched no known format and were skipped.`;
+      un.style.display = 'block';
+    } else { un.style.display = 'none'; }
+
+    // Breakdown
+    document.getElementById('breakdown-body').innerHTML = (d.by_type || []).map(r => {
+      const col = TYPE_COLOR[r.type] || TYPE_COLOR.Unknown;
+      return `<tr>
+        <td><span class="gc-badge gc-${na(r.type)}">${na(r.type)}</span></td>
+        <td class="td-val">${r.count != null ? r.count.toLocaleString() : 'N/A'}</td>
+        <td><div class="prog-wrap">
+          <div class="prog-bg"><div class="prog-fill" style="width:${r.pct ?? 0}%;background:${col}"></div></div>
+          <span class="prog-pct">${r.pct != null ? r.pct + '%' : 'N/A'}</span>
+        </div></td></tr>`;
+    }).join('');
+
+    // Pause
+    document.getElementById('pause-body').innerHTML = (d.pause_rows || []).map(r =>
+      `<tr><td class="td-label">${na(r.label)}</td><td class="td-val">${na(r.value)}</td></tr>`
+    ).join('');
+
+    // Heap
+    document.getElementById('heap-body').innerHTML = (d.heap_rows || []).map(r =>
+      `<tr><td class="td-label">${na(r.label)}</td><td class="td-val">${na(r.value)}</td></tr>`
+    ).join('');
+
+    // Observations
+    document.getElementById('obs-list').innerHTML = (d.observations || []).map(o => {
+      const m = o.match(/^\[(WARN|INFO|OK)\]\s*/);
+      const level = m ? m[1] : 'INFO';
+      const text  = m ? o.slice(m[0].length) : o;
+      return `<li class="obs-item obs-${level}">
+        <span class="obs-tag">${level}</span><span>${text}</span></li>`;
+    }).join('');
+
+    // ── KPI Dashboard ──────────────────────────────────────
+    renderKpiSummary(d);
+
+    // ── Charts ─────────────────────────────────────────────
+    _charts = {
+      after:     { src: d.charts?.after,        obs: d.chart_obs?.after },
+      before:    { src: d.charts?.before,       obs: d.chart_obs?.before },
+      duration:  { src: d.gc_duration_chart,    obs: d.gc_duration_chart_obs },
+      reclaimed: { src: d.reclaimed_chart,      obs: d.reclaimed_chart_obs },
+      pause_gc:  { src: d.pause_gc_chart,       obs: d.pause_gc_chart_obs },
+    };
+    // Remove options that have no data
+    const sel = document.getElementById('chart-selector');
+    [...sel.options].forEach(opt => {
+      opt.disabled = !_charts[opt.value]?.src;
+    });
+    sel.value = 'after';
+    switchChart();
+    if (Object.values(_charts).some(c => c.src)) {
+      document.getElementById('chart-viewer-card').style.display = 'block';
+    }
+
+    // ── JVM Memory Size ────────────────────────────────────
+    if (d.jvm_memory_chart) {
+      document.getElementById('jvm-memory-chart').src = d.jvm_memory_chart;
+      document.getElementById('jvm-memory-section').style.display = 'block';
+    }
+
+    // ── G1 Collection Phases ───────────────────────────────
+    if (d.g1_phases?.has_data) {
+      document.getElementById('g1-phases-bar').src = d.g1_phases.bar_chart;
+      document.getElementById('g1-phases-pie').src = d.g1_phases.pie_chart;
+      const rows = [
+        ['Total Time',    'total'],
+        ['Avg Time',      'avg'],
+        ['Std Dev Time',  'std'],
+        ['Min Time',      'min'],
+        ['Max Time',      'max'],
+        ['Interval Time', 'interval'],
+        ['Count',         'count'],
+      ];
+      const p = d.g1_phases;
+      document.getElementById('g1-phases-body').innerHTML = rows.map(([lbl, key]) =>
+        `<tr><td>${lbl}</td><td>${na(p.young?.[key])}</td><td>${na(p.remark?.[key])}</td><td>${na(p.cleanup?.[key])}</td></tr>`
+      ).join('');
+      document.getElementById('g1-phases-section').style.display = 'block';
+    }
+
+    // ── G1 GC Time ─────────────────────────────────────────
+    if (d.g1_time?.has_data) {
+      document.getElementById('g1-pie-chart').src = d.g1_time.pie_chart;
+      document.getElementById('g1-bar-chart').src = d.g1_time.bar_chart;
+      const mkRows = rows => rows.map(r =>
+        `<tr><td>${na(r.label)}</td><td>${na(r.value)}</td></tr>`).join('');
+      document.getElementById('g1-pause-body').innerHTML = mkRows(d.g1_time.pause_rows);
+      document.getElementById('g1-conc-body').innerHTML  = mkRows(d.g1_time.conc_rows.length
+        ? d.g1_time.conc_rows
+        : [{ label: 'No concurrent GC events', value: '—' }]);
+      document.getElementById('g1-section').style.display = 'block';
+    }
+
+    show('results');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function switchChart() {
+    const key = document.getElementById('chart-selector').value;
+    const c   = _charts[key];
+    if (!c?.src) return;
+    document.getElementById('chart-viewer-img').src = c.src;
+    document.getElementById('chart-viewer-obs').innerHTML = renderChartObs(c.obs);
+  }
+
+  function renderKpiSummary(d) {
+    const tp = d.kpi_values?.throughput?.find(v => v.label === 'App Throughput');
+    document.getElementById('kpi-sum-throughput').textContent =
+      tp ? tp.value : (d.overview?.find(o => o.label === 'App Throughput')?.value || 'N/A');
+
+    const cpuOv = d.kpi_values?.cpu_time?.find(v => v.label === 'GC CPU Overhead');
+    document.getElementById('kpi-sum-cpu').textContent = cpuOv ? na(cpuOv.value) : 'N/A';
+
+    const latency = d.kpi_values?.latency || [];
+    document.getElementById('kpi-sum-avg').textContent = latency.find(v => v.label === 'Mean')?.value || 'N/A';
+    document.getElementById('kpi-sum-max').textContent = latency.find(v => v.label === 'Max')?.value  || 'N/A';
+
+    // Reset the bucket-size control to the server default (1 sec) and render.
+    document.getElementById('kpi-bucket-size').value = '1';
+    document.getElementById('kpi-bucket-unit').value = 'sec';
+    renderBuckets(d.duration_buckets);
+
+    const chartEl = document.getElementById('kpi-summary-chart');
+    if (d.kpi_summary_chart) {
+      chartEl.src = d.kpi_summary_chart;
+      chartEl.style.display = 'block';
+    } else {
+      chartEl.style.display = 'none';
+    }
+
+    document.getElementById('kpi-section').style.display = 'block';
+
+    // KPI Observations
+    const KPI_LABELS = {
+      throughput:     'Throughput',
+      cpu_time:       'CPU Time',
+      latency:        'Latency',
+      avg_pause:      'Avg Pause',
+      max_pause:      'Max Pause',
+      duration_range: 'Duration Range',
+    };
+    const obsData = d.kpi_obs || {};
+    const obsGroups = Object.entries(KPI_LABELS)
+      .filter(([k]) => obsData[k] && obsData[k].length)
+      .map(([k, label]) => {
+        const rows = obsData[k].map(o => `
+          <div class="cobs-item cobs-${o.level}">
+            <span class="cobs-tag">${o.level}</span>
+            <span>${o.text}</span>
+          </div>`).join('');
+        return `<div>
+          <div class="group-label">${label}</div>
+          ${rows}
+        </div>`;
+      }).join('');
+
+    if (obsGroups) {
+      document.getElementById('kpi-obs-body').innerHTML = obsGroups;
+      document.getElementById('kpi-obs-section').style.display = 'block';
+    } else {
+      document.getElementById('kpi-obs-section').style.display = 'none';
+    }
+  }
+
+  function renderChartObs(items) {
+    if (!items || !items.length) return '';
+    const rows = items.map(o => `
+      <div class="cobs-item cobs-${o.level}">
+        <span class="cobs-tag">${o.level}</span>
+        <span>${o.text}</span>
+      </div>`).join('');
+    return `<div class="chart-obs-title">Observations</div>${rows}`;
+  }
+
+  async function downloadReport() {
+    const btn  = document.getElementById('pdf-btn');
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Generating PDF…';
+    try {
+      const resp = await fetch('/download-report');
+      if (!resp.ok) { alert('PDF generation failed. Please try again.'); return; }
+      const blob = await resp.blob();
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      const base = (document.getElementById('res-filename').textContent.trim() || 'gc_report')
+                     .replace(/\.[^.]+$/, '');
+      a.download = base + '_report.pdf';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      alert('Error generating PDF: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
+  }
+
+  function reset() {
+    activeFile = null; fileInput.value = '';
+    hide('file-pill'); hide('analyze-btn');
+    hide('results'); hide('err-box');
+    document.getElementById('chart-viewer-card').style.display  = 'none';
+    document.getElementById('jvm-memory-section').style.display = 'none';
+    document.getElementById('g1-phases-section').style.display  = 'none';
+    document.getElementById('g1-section').style.display         = 'none';
+    _charts = {};
+    document.getElementById('kpi-section').style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Throughput image analysis ───────────────────────────
+  function escapeHtml(s) {
+    return (s || '').toString()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function trendClass(trend) {
+    if (trend === 'Stable')      return 'thr-trend-Stable';
+    if (trend === 'Increasing')  return 'thr-trend-Increasing';
+    if (trend === 'Decreasing')  return 'thr-trend-Decreasing';
+    if (trend === 'Fluctuating') return 'thr-trend-Fluctuating';
+    return 'thr-trend-Anomaly';
+  }
+
+  function renderObsItem(o) {
+    return `<li class="cobs-item cobs-${o.level}">
+              <span class="cobs-tag">${o.level}</span>
+              <span>${escapeHtml(o.text)}</span>
+            </li>`;
+  }
+
+  function renderAnalysisCard(a, imgSrc, sectionLabel) {
+    const m = a.metrics || {};
+    const metricTiles = [
+      { lab: 'Mean (norm)',        val: m.mean_norm  != null ? m.mean_norm  : '—' },
+      { lab: 'Variability (CoV)',  val: m.cov        != null ? m.cov.toFixed(2) : '—' },
+      { lab: 'Slope across window',val: m.slope_per_timeline != null ? (m.slope_per_timeline > 0 ? '+' : '') + m.slope_per_timeline : '—' },
+      { lab: 'Drops detected',     val: m.drops_detected  != null ? m.drops_detected  : '—' },
+      { lab: 'Spikes detected',    val: m.spikes_detected != null ? m.spikes_detected : '—' },
+      { lab: 'Highest at',         val: m.highest_position_pct != null ? m.highest_position_pct + '%' : '—' },
+      { lab: 'Lowest at',          val: m.lowest_position_pct  != null ? m.lowest_position_pct  + '%' : '—' },
+    ];
+    const tilesHtml = metricTiles.map(t =>
+      `<div class="thr-metric">
+         <div class="thr-metric-val">${escapeHtml(t.val.toString())}</div>
+         <div class="thr-metric-lab">${escapeHtml(t.lab)}</div>
+       </div>`).join('');
+
+    const obsHtml    = (a.observations    || []).map(renderObsItem).join('');
+    const interpHtml = (a.interpretation  || []).map(t => `<li>${escapeHtml(t)}</li>`).join('');
+    const recHtml    = (a.recommendations || []).map(t => `<li>${escapeHtml(t)}</li>`).join('');
+
+    const label = sectionLabel || 'throughput graph';
+
+    return `
+      <div class="card">
+        <div class="card-title">
+          ${escapeHtml(a.period_label)} ${escapeHtml(label)}
+          <span class="thr-trend-pill ${trendClass(a.trend)}" style="margin-left:.5rem">${escapeHtml(a.trend)}</span>
+        </div>
+        <div class="thr-image-wrap"><img src="${imgSrc}" alt="${escapeHtml(a.filename)}"></div>
+
+        <div class="thr-section-title">Extracted metrics</div>
+        <div class="thr-metric-grid">${tilesHtml}</div>
+
+        <div class="thr-section-title">Key observations</div>
+        <ul class="obs-list">${obsHtml}</ul>
+
+        <div class="thr-section-title">Technical interpretation</div>
+        <ul class="thr-interp-list">${interpHtml}</ul>
+
+        <div class="thr-section-title">Recommendations</div>
+        <ul class="thr-rec-list">${recHtml}</ul>
+      </div>`;
+  }
+
+  function renderComparisonCard(items, periodsPresent) {
+    if (!items || !items.length) return '';
+    const title = periodsPresent && periodsPresent.length
+      ? periodsPresent.join(' vs ') + ' comparison'
+      : 'Cross-window comparison';
+    const html  = items.map(renderObsItem).join('');
+    return `
+      <div class="card">
+        <div class="card-title">${escapeHtml(title)}</div>
+        <ul class="obs-list">${html}</ul>
+      </div>`;
+  }
+
+  function renderThroughput(d) {
+    const results = document.getElementById('thr-results');
+    const order   = ['30-day', '7-day', '24-hour'];
+    let html = `<div class="thr-folder-badge">📁 ${escapeHtml(d.folder)}</div>`;
+
+    const periodsPresent = [];
+    order.forEach(label => {
+      if (d.analyses && d.analyses[label]) {
+        periodsPresent.push(label);
+        html += renderAnalysisCard(d.analyses[label], (d.images || {})[label] || '', 'throughput graph');
+      }
+    });
+
+    html += renderComparisonCard(d.comparison, periodsPresent);
+
+    if (d.missing && d.missing.length) {
+      html += `<div class="thr-missing">
+        Note: the following expected file(s) were not found in the folder and were skipped:
+        <strong>${d.missing.map(escapeHtml).join(', ')}</strong>.
+      </div>`;
+    }
+
+    if (periodsPresent.length) {
+      html += `<button class="pdf-btn" id="thr-pdf-btn" onclick="downloadThroughputReport()">
+        &#8595; Download Throughput PDF Report
+      </button>`;
+      html += `<button class="re-btn" onclick="resetThroughput()">Analyze Another File</button>`;
+    }
+
+    results.innerHTML = html;
+    show('thr-results');
+  }
+
+  function resetThroughput() {
+    const folderInput = document.getElementById('thr-folder');
+    folderInput.value = '';
+    const results = document.getElementById('thr-results');
+    results.innerHTML = '';
+    hide('thr-results');
+    hide('thr-err');
+    hide('thr-loading');
+    folderInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    folderInput.focus();
+  }
+
+  // ── Heap memory image analysis ─────────────────────────
+  function renderHeap(d) {
+    const results = document.getElementById('heap-results');
+    const order   = ['30-day', '7-day', '24-hour'];
+    let html = `<div class="thr-folder-badge">📁 ${escapeHtml(d.folder)}</div>`;
+
+    const periodsPresent = [];
+    order.forEach(label => {
+      if (d.analyses && d.analyses[label]) {
+        periodsPresent.push(label);
+        html += renderAnalysisCard(d.analyses[label], (d.images || {})[label] || '', 'heap memory graph');
+      }
+    });
+
+    html += renderComparisonCard(d.comparison, periodsPresent);
+
+    if (d.missing && d.missing.length) {
+      html += `<div class="thr-missing">
+        Note: the following expected file(s) were not found in the folder and were skipped:
+        <strong>${d.missing.map(escapeHtml).join(', ')}</strong>.
+      </div>`;
+    }
+
+    if (periodsPresent.length) {
+      html += `<button class="pdf-btn" id="heap-pdf-btn" onclick="downloadHeapReport()">
+        &#8595; Download Heap Memory PDF Report
+      </button>`;
+      html += `<button class="re-btn" onclick="resetHeap()">Analyze Another File</button>`;
+    }
+
+    results.innerHTML = html;
+    show('heap-results');
+  }
+
+  async function runHeapAnalysis() {
+    const folder = document.getElementById('heap-folder').value.trim();
+    if (!folder) {
+      showHeapErr('Please enter the folder path containing the heap memory images.');
+      return;
+    }
+    const btn = document.getElementById('heap-btn');
+    btn.disabled = true; btn.textContent = 'Analyzing...';
+    hide('heap-err'); hide('heap-results');
+    show('heap-loading');
+
+    try {
+      const res  = await fetch('/analyze-heap', {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify({ folder_path: folder }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showHeapErr(data.error || 'Heap memory analysis failed.');
+      } else {
+        renderHeap(data);
+      }
+    } catch (e) {
+      showHeapErr('Network error: ' + e.message);
+    } finally {
+      hide('heap-loading');
+      btn.disabled = false; btn.textContent = 'Analyze Heap Memory Images';
+    }
+  }
+
+  function showHeapErr(msg) {
+    const el = document.getElementById('heap-err');
+    el.textContent = msg; show('heap-err');
+  }
+
+  async function downloadHeapReport() {
+    const btn  = document.getElementById('heap-pdf-btn');
+    const orig = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Generating PDF…'; }
+    try {
+      const resp = await fetch('/download-heap-report');
+      if (!resp.ok) {
+        const msg = await resp.text();
+        alert('PDF generation failed: ' + (msg || resp.statusText));
+        return;
+      }
+      const blob = await resp.blob();
+      const disp = resp.headers.get('Content-Disposition') || '';
+      const m    = disp.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const ts   = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '');
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = m ? m[1] : `${ts}_Heap_Memory_Analysis.pdf`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      alert('Error generating PDF: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    }
+  }
+
+  function resetHeap() {
+    const folderInput = document.getElementById('heap-folder');
+    folderInput.value = '';
+    const results = document.getElementById('heap-results');
+    results.innerHTML = '';
+    hide('heap-results');
+    hide('heap-err');
+    hide('heap-loading');
+    folderInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    folderInput.focus();
+  }
+
+  // Submit on Enter inside the heap folder text field
+  document.getElementById('heap-folder').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); runHeapAnalysis(); }
+  });
+
+  async function downloadThroughputReport() {
+    const btn  = document.getElementById('thr-pdf-btn');
+    const orig = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Generating PDF…'; }
+    try {
+      const resp = await fetch('/download-throughput-report');
+      if (!resp.ok) {
+        const msg = await resp.text();
+        alert('PDF generation failed: ' + (msg || resp.statusText));
+        return;
+      }
+      const blob = await resp.blob();
+      const disp = resp.headers.get('Content-Disposition') || '';
+      const m    = disp.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const ts   = new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '');
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = m ? m[1] : `${ts}_Throughput_Image_Analysis.pdf`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      alert('Error generating PDF: ' + e.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    }
+  }
+
+  async function runThroughputAnalysis() {
+    const folder = document.getElementById('thr-folder').value.trim();
+    if (!folder) {
+      showThrErr('Please enter the folder path containing the throughput images.');
+      return;
+    }
+    const btn = document.getElementById('thr-btn');
+    btn.disabled = true; btn.textContent = 'Analyzing...';
+    hide('thr-err'); hide('thr-results');
+    show('thr-loading');
+
+    try {
+      const res  = await fetch('/analyze-throughput', {
+        method:  'POST',
+        headers: {'Content-Type': 'application/json'},
+        body:    JSON.stringify({ folder_path: folder }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        showThrErr(data.error || 'Throughput analysis failed.');
+      } else {
+        renderThroughput(data);
+      }
+    } catch (e) {
+      showThrErr('Network error: ' + e.message);
+    } finally {
+      hide('thr-loading');
+      btn.disabled = false; btn.textContent = 'Analyze Throughput Images';
+    }
+  }
+
+  function showThrErr(msg) {
+    const el = document.getElementById('thr-err');
+    el.textContent = msg; show('thr-err');
+  }
+
+  // Submit on Enter inside the folder text field
+  document.getElementById('thr-folder').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); runThroughputAnalysis(); }
+  });
+
+  function show(id) { document.getElementById(id).classList.add('show'); }
+  function hide(id) { document.getElementById(id).classList.remove('show'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+# Rhapsody UI Brand Guardrails (use these rules in everything you generate)
+
+You are building **new UI and UI code** that must match the Rhapsody design system 
+Prioritize **clarity and restraint**. If you are unsure, choose the simplest, most neutral option.
+
+## 1) Color tokens (use tokens, not random colors)
+Use ONLY these hex values unless explicitly told otherwise.
+
+### Core
+- **Primary Blue**: `#1A81F4` (primary buttons, links, key highlights)
+- **Ink** (near black): `#050F19` (primary text)
+- **White**: `#FFFFFF` (page and card backgrounds)
+
+### Neutrals
+- **Gray**: `#7E858C` (secondary text, subtle UI elements)
+- **Light Gray**: `#D9DFE6` (borders, dividers, subtle backgrounds)
+
+### Semantic accents (use sparingly, for status and emphasis only)
+- **Info Teal**: `#23C5BF`
+- **Warning Orange**: `#FA7E2E`
+- **Accent Purple**: `#7340E4`
+- **Error Red**: `#D64545`
+- **Warning Yellow**: `#FFC857`
+- **Success Green**: `#2FAD68`
+
+### Color usage rules
+- Default text is **Ink** on **White**.
+- Use **Primary Blue** for the single primary action per surface.
+- Use accents for **status only** (success, warning, error, info). Do not decorate with them.
+- Prefer **Light Gray** borders and fills for structure, not heavy shadows.
+- Keep contrast readable: avoid Gray text on Light Gray backgrounds for body copy.
+
+## 2) Typography (MANDATORY: Poppins)
+
+Font family: **Poppins**, sans-serif  
+Fallback: system-ui, sans-serif
+
+Use Poppins everywhere. Do not substitute other fonts.
+
+### Type roles (use role names in your output)
+- **Display**: for hero titles only
+- **Heading 1**: page title
+- **Heading 2**: major section
+- **Heading 3**: subsection
+- **Heading 4**: small section headers
+- **Body**: default paragraph text
+- **Label**: form labels, helper text, metadata
+- **Button**: button text (slightly stronger than body)
+
+### Typography rules
+- One Display or H1 per page.
+- Keep headings short and scannable.
+- Body text is comfortable and not dense (generous line height).
+- Use weight, size, and spacing for hierarchy, not color.
+
+## 3) Components and layout feel
+- Appropriate whitespace, clear grouping, minimal decoration.
+- Use subtle borders (Light Gray) and soft neutral fills for panels.
+- Primary buttons use **Primary Blue** with white text.
+- Secondary buttons are neutral (white background, Light Gray border, Ink text).
+- Inputs: white background, Light Gray border, Ink text, clear Label above.
+
+## 4) Icons (consistent, simple line icons)
+- Use simple line icons with consistent stroke weight.
+- Default icon color is Ink or Gray.
+- Use semantic colors only when the icon represents a status (success, warning, error, info).
+
+## 5) Output format requirements 
+When generating UI specs or code:
+- Reference **color tokens by name** (Primary Blue, Ink, Light Gray, etc) and include the hex once in a tokens section.
+- Use **type roles** (H1, H2, Body, Label, Button) instead of inventing new styles.
+- If you must invent a size, keep it conservative and consistent across the screen.
+
+If any requested styling conflicts with these rules, call it out and propose the closest on brand alternative.
