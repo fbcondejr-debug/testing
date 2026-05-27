@@ -10,6 +10,7 @@ import os
 import base64
 import tempfile
 import statistics
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -17,6 +18,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
+import matplotlib.dates as mdates
 import numpy as np
 from PIL import Image
 
@@ -66,6 +68,61 @@ def _event_time(e) -> Optional[float]:
     """Return the best available time value for an event.
     Prefers wall_clock_s (correct across JVM restarts) over JVM uptime timestamp_s."""
     return e.wall_clock_s if e.wall_clock_s is not None else e.timestamp_s
+
+
+_EPOCH_THRESHOLD = 1_000_000_000  # > 2001-09-09 in Unix seconds → treat as wall-clock
+
+
+def _ts_to_dt(ts):
+    """Convert epoch-second floats to local datetimes when they look like wall-clock
+    timestamps; otherwise return the list unchanged (uptime in seconds)."""
+    if ts and ts[0] > _EPOCH_THRESHOLD:
+        return [datetime.fromtimestamp(t) for t in ts]
+    return list(ts)
+
+
+def _format_time_axis(ax, xs):
+    """Configure the x-axis with readable date/time labels.
+
+    `xs` should be the same values plotted on the x-axis: a list of datetimes
+    when the log has wall-clock timestamps, or floats (seconds since JVM start)
+    otherwise. Picks a tick cadence that matches the time span shown.
+    """
+    if not xs:
+        return
+
+    if isinstance(xs[0], datetime):
+        span_s = (xs[-1] - xs[0]).total_seconds()
+        if span_s <= 3600 * 6:
+            interval = max(1, int(span_s / 3600 / 8) or 1)
+            ax.xaxis.set_major_locator(mdates.HourLocator(interval=interval))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M"))
+        elif span_s <= 86400 * 2:
+            ax.xaxis.set_major_locator(mdates.HourLocator(byhour=[0, 6, 12, 18]))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d, %H:%M"))
+        elif span_s <= 86400 * 14:
+            ax.xaxis.set_major_locator(mdates.DayLocator())
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d, %H:%M"))
+        else:
+            ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+            ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+    else:
+        span_s = xs[-1] - xs[0]
+
+        def _fmt_uptime(s, _):
+            s = int(s)
+            if span_s < 60:
+                return f"{s}s"
+            if span_s < 3600:
+                return f"{s // 60:02d}:{s % 60:02d}"
+            if span_s < 86400:
+                return f"{s // 3600}h{(s % 3600) // 60:02d}m"
+            return f"{s // 86400}d{(s % 86400) // 3600:02d}h"
+
+        ax.xaxis.set_major_formatter(mticker.FuncFormatter(_fmt_uptime))
+
+    ax.tick_params(axis="x", labelbottom=True, labelsize=9,
+                   colors="#64748b", length=4, color="#cbd5e1")
 
 
 def _timed_pauses(events):
@@ -252,7 +309,7 @@ def _heap_chart_b64(events, which: str) -> str:
 
     raw.sort(key=lambda x: x[0])
 
-    ts       = [r[0] for r in raw]
+    ts       = _ts_to_dt([r[0] for r in raw])
     ys       = [r[1] / 1024 if which == "before" else r[2] / 1024 for r in raw]
     gc_types = [r[3] for r in raw]
 
@@ -272,7 +329,6 @@ def _heap_chart_b64(events, which: str) -> str:
 
     label = "after" if which == "after" else "before"
     ax.set_title(f"Heap Usage ({label} GC)", fontsize=12, fontweight="bold", pad=10)
-    ax.set_xlabel("Time", fontsize=10, color="#64748b")
     ax.set_ylabel("Heap size (mb)", fontsize=10, color="#64748b")
 
     data_max = max(ys) if ys else 0
@@ -287,7 +343,6 @@ def _heap_chart_b64(events, which: str) -> str:
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     ax.tick_params(axis="y", labelsize=9, colors="#64748b")
 
-    ax.tick_params(axis="x", labelbottom=False, length=4, color="#cbd5e1")
     ax.grid(axis="y", linestyle="-", linewidth=0.6, alpha=0.5, color="#e2e8f0", zorder=0)
     ax.grid(axis="x", visible=False)
     ax.set_axisbelow(True)
@@ -296,6 +351,7 @@ def _heap_chart_b64(events, which: str) -> str:
     ax.spines["left"].set_color("#e2e8f0")
     ax.spines["bottom"].set_color("#e2e8f0")
     ax.set_xlim(left=ts[0], right=ts[-1])
+    _format_time_axis(ax, ts)
     fig.tight_layout()
 
     buf = io.BytesIO()
@@ -320,6 +376,8 @@ def _gc_duration_chart_b64(events) -> str:
         return _fig_to_b64(fig)
 
     data.sort(key=lambda x: x[0])
+    if data and data[0][0] > _EPOCH_THRESHOLD:
+        data = [(datetime.fromtimestamp(t), p, gc) for t, p, gc in data]
 
     non_full = [(d[0], d[1]) for d in data if d[2] != "Full"]
     full     = [(d[0], d[1]) for d in data if d[2] == "Full"]
@@ -338,9 +396,7 @@ def _gc_duration_chart_b64(events) -> str:
                    linewidths=0, label="Full GC")
 
     ax.set_title("GC Duration (pause time per event)", fontsize=12, fontweight="bold", pad=10)
-    ax.set_xlabel("Time", fontsize=10)
     ax.set_ylabel("Pause duration (ms)", fontsize=10)
-    ax.tick_params(axis="x", labelbottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     ax.tick_params(axis="y", labelsize=9)
     ax.grid(axis="y", linestyle="-", linewidth=0.6, alpha=0.4, color="#cbd5e1")
@@ -350,6 +406,7 @@ def _gc_duration_chart_b64(events) -> str:
     all_xs = [d[0] for d in data]
     ax.set_xlim(left=all_xs[0], right=all_xs[-1])
     ax.set_ylim(bottom=0)
+    _format_time_axis(ax, all_xs)
     ax.legend(fontsize=9, loc="lower center",
               bbox_to_anchor=(0.5, -0.18), ncol=2,
               frameon=False, handletextpad=0.4, columnspacing=1.2)
@@ -446,6 +503,8 @@ def _pause_gc_chart_b64(events) -> str:
         return _fig_to_b64(fig)
 
     data.sort(key=lambda x: x[0])
+    if data and data[0][0] > _EPOCH_THRESHOLD:
+        data = [(datetime.fromtimestamp(t), p, gc) for t, p, gc in data]
 
     non_full = [(d[0], d[1]) for d in data if d[2] != "Full"]
     full     = [(d[0], d[1]) for d in data if d[2] == "Full"]
@@ -464,9 +523,7 @@ def _pause_gc_chart_b64(events) -> str:
                    linewidths=0, label="Full GC")
 
     ax.set_title("Pause GC Duration (stop-the-world events)", fontsize=12, fontweight="bold", pad=10)
-    ax.set_xlabel("Time", fontsize=10)
     ax.set_ylabel("Pause Duration (ms)", fontsize=10)
-    ax.tick_params(axis="x", labelbottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     ax.tick_params(axis="y", labelsize=9)
     ax.grid(axis="y", linestyle="-", linewidth=0.6, alpha=0.4, color="#cbd5e1")
@@ -476,6 +533,7 @@ def _pause_gc_chart_b64(events) -> str:
     all_xs = [d[0] for d in data]
     ax.set_xlim(left=all_xs[0], right=all_xs[-1])
     ax.set_ylim(bottom=0)
+    _format_time_axis(ax, all_xs)
     ax.legend(fontsize=9, loc="lower center",
               bbox_to_anchor=(0.5, -0.18), ncol=2,
               frameon=False, handletextpad=0.4, columnspacing=1.2)
@@ -576,6 +634,8 @@ def _reclaimed_chart_b64(events) -> str:
         return _fig_to_b64(fig)
 
     data.sort(key=lambda x: x[0])
+    if data and data[0][0] > _EPOCH_THRESHOLD:
+        data = [(datetime.fromtimestamp(t), v, gc) for t, v, gc in data]
 
     non_full = [(d[0], d[1]) for d in data if d[2] != "Full"]
     full     = [(d[0], d[1]) for d in data if d[2] == "Full"]
@@ -594,9 +654,7 @@ def _reclaimed_chart_b64(events) -> str:
                    linewidths=0, label="Full GC")
 
     ax.set_title("Reclaimed Bytes", fontsize=12, fontweight="bold", pad=10)
-    ax.set_xlabel("Time", fontsize=10)
     ax.set_ylabel("Reclaimed (mb)", fontsize=10)
-    ax.tick_params(axis="x", labelbottom=False)
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     ax.tick_params(axis="y", labelsize=9)
     ax.grid(axis="y", linestyle="-", linewidth=0.6, alpha=0.4, color="#cbd5e1")
@@ -606,6 +664,7 @@ def _reclaimed_chart_b64(events) -> str:
     all_xs = [d[0] for d in data]
     ax.set_xlim(left=all_xs[0], right=all_xs[-1])
     ax.set_ylim(bottom=0)
+    _format_time_axis(ax, all_xs)
     ax.legend(fontsize=9, loc="lower center",
               bbox_to_anchor=(0.5, -0.18), ncol=2,
               frameon=False, handletextpad=0.4, columnspacing=1.2)
@@ -699,6 +758,200 @@ def _reclaimed_chart_obs(events) -> list:
                     "These near-zero reclamation events may indicate premature GC triggering."})
 
     return obs if obs else [{"level": "OK", "text": "No anomalies detected in reclaimed bytes."}]
+
+
+# ── Interactive (Plotly) data for the 4 time-series charts ────────────────────
+# These return JSON-serialisable Plotly figure dicts so the frontend can render
+# them with pan / zoom / reset controls. The static _b64 versions above are kept
+# for the PDF report path, which embeds PNGs.
+
+def _plotly_x_values(ts):
+    """Format x values for Plotly: ISO strings for wall-clock, raw floats for uptime."""
+    if not ts:
+        return []
+    if ts[0] > _EPOCH_THRESHOLD:
+        return [datetime.fromtimestamp(t).isoformat() for t in ts]
+    return list(ts)
+
+
+def _plotly_base_layout(title: str, xs, ytitle: str = "") -> dict:
+    """Common Plotly layout matching the existing matplotlib styling."""
+    is_wall_clock = bool(xs) and isinstance(xs[0], str)  # ISO date strings
+    xaxis = {
+        "showgrid": False,
+        "showline": True,
+        "linecolor": "#e2e8f0",
+        "ticks": "outside",
+        "tickcolor": "#cbd5e1",
+        "tickfont": {"size": 10, "color": "#64748b"},
+        "automargin": True,
+    }
+    if is_wall_clock:
+        xaxis["type"] = "date"
+
+    return {
+        "title": {
+            "text": f"<b>{title}</b>",
+            "font": {"size": 14, "color": "#1e293b"},
+            "x": 0.5, "xanchor": "center",
+        },
+        "autosize": True,
+        "paper_bgcolor": "#ffffff",
+        "plot_bgcolor": "#ffffff",
+        "margin": {"l": 60, "r": 30, "t": 50, "b": 50},
+        "xaxis": xaxis,
+        "yaxis": {
+            "title": {"text": ytitle, "font": {"size": 10, "color": "#64748b"}},
+            "showgrid": True,
+            "gridcolor": "#e2e8f0",
+            "gridwidth": 1,
+            "zeroline": False,
+            "rangemode": "tozero",
+            "tickfont": {"size": 10, "color": "#64748b"},
+            "tickformat": ",.0f",
+            "automargin": True,
+        },
+        "legend": {
+            "orientation": "h",
+            "yanchor": "top", "y": -0.12,
+            "xanchor": "center", "x": 0.5,
+            "font": {"size": 10, "color": "#475569"},
+        },
+        "hovermode": "x unified",
+        "height": 420,
+    }
+
+
+def _heap_chart_plotly(events, which: str) -> dict:
+    raw = [
+        (_event_time(e), e.heap_before_kb, e.heap_after_kb, e.gc_type)
+        for e in events
+        if _event_time(e) is not None
+        and e.heap_before_kb and e.heap_after_kb
+    ]
+    if not raw:
+        return {}
+    raw.sort(key=lambda x: x[0])
+
+    ts_raw   = [r[0] for r in raw]
+    ys       = [r[1] / 1024 if which == "before" else r[2] / 1024 for r in raw]
+    gc_types = [r[3] for r in raw]
+
+    full_ts_raw = [ts_raw[i] for i, t in enumerate(gc_types) if t == "Full"]
+    full_ys     = [ys[i]     for i, t in enumerate(gc_types) if t == "Full"]
+
+    xs      = _plotly_x_values(ts_raw)
+    full_xs = _plotly_x_values(full_ts_raw)
+
+    data = [{
+        "type": "scatter",
+        "mode": "lines",
+        "x": xs, "y": ys,
+        "line": {"shape": "hv", "color": "#0d9488", "width": 1.2},
+        "fill": "tozeroy",
+        "fillcolor": "rgba(45, 212, 191, 0.55)",
+        "name": "Heap",
+        "hovertemplate": "%{x}<br>%{y:,.0f} MB<extra></extra>",
+        "showlegend": False,
+    }]
+    if full_xs:
+        data.append({
+            "type": "scatter",
+            "mode": "markers",
+            "x": full_xs, "y": full_ys,
+            "marker": {"symbol": "triangle-up", "color": "#ef4444",
+                       "size": 9, "line": {"width": 0}},
+            "name": "Full GC",
+            "hovertemplate": "Full GC<br>%{x}<br>%{y:,.0f} MB<extra></extra>",
+        })
+
+    label  = "after" if which == "after" else "before"
+    layout = _plotly_base_layout(f"Heap Usage ({label} GC)", xs, ytitle="Heap size (MB)")
+    return {"data": data, "layout": layout}
+
+
+def _scatter_chart_plotly(events, title: str, ytitle: str, y_unit: str,
+                          value_fn, filter_fn=None) -> dict:
+    """Shared builder for the Young/Full-GC scatter charts
+    (GC Duration, Pause GC Duration, Reclaimed Bytes)."""
+    rows = []
+    for e in events:
+        t = _event_time(e)
+        if t is None:
+            continue
+        if filter_fn is not None and not filter_fn(e):
+            continue
+        val = value_fn(e)
+        if val is None:
+            continue
+        rows.append((t, val, e.gc_type))
+    if not rows:
+        return {}
+    rows.sort(key=lambda r: r[0])
+
+    non_full = [(t, v) for t, v, gc in rows if gc != "Full"]
+    full     = [(t, v) for t, v, gc in rows if gc == "Full"]
+
+    data = []
+    if non_full:
+        data.append({
+            "type": "scatter",
+            "mode": "markers",
+            "x": _plotly_x_values([r[0] for r in non_full]),
+            "y": [r[1] for r in non_full],
+            "marker": {"symbol": "square", "color": "#2dd4bf",
+                       "size": 7, "line": {"width": 0}},
+            "name": "Young GC",
+            "hovertemplate": f"Young GC<br>%{{x}}<br>%{{y:,.0f}} {y_unit}<extra></extra>",
+        })
+    if full:
+        data.append({
+            "type": "scatter",
+            "mode": "markers",
+            "x": _plotly_x_values([r[0] for r in full]),
+            "y": [r[1] for r in full],
+            "marker": {"symbol": "triangle-up", "color": "#ef4444",
+                       "size": 10, "line": {"width": 0}},
+            "name": "Full GC",
+            "hovertemplate": f"Full GC<br>%{{x}}<br>%{{y:,.0f}} {y_unit}<extra></extra>",
+        })
+
+    xs_all = _plotly_x_values([r[0] for r in rows])
+    layout = _plotly_base_layout(title, xs_all, ytitle=ytitle)
+    return {"data": data, "layout": layout}
+
+
+def _gc_duration_chart_plotly(events) -> dict:
+    return _scatter_chart_plotly(
+        events,
+        title="GC Duration (pause time per event)",
+        ytitle="Pause duration (ms)", y_unit="ms",
+        value_fn=lambda e: e.pause_ms,
+    )
+
+
+def _pause_gc_chart_plotly(events) -> dict:
+    return _scatter_chart_plotly(
+        events,
+        title="Pause GC Duration (stop-the-world events)",
+        ytitle="Pause Duration (ms)", y_unit="ms",
+        value_fn=lambda e: e.pause_ms,
+        filter_fn=lambda e: e.gc_type not in ("Concurrent", "Unknown"),
+    )
+
+
+def _reclaimed_chart_plotly(events) -> dict:
+    def _reclaimed(e):
+        if (e.heap_before_kb is None or e.heap_after_kb is None
+                or e.heap_before_kb < e.heap_after_kb):
+            return None
+        return (e.heap_before_kb - e.heap_after_kb) / 1024
+    return _scatter_chart_plotly(
+        events,
+        title="Reclaimed Bytes",
+        ytitle="Reclaimed (MB)", y_unit="MB",
+        value_fn=_reclaimed,
+    )
 
 
 # ── KPI Chart: Throughput ──────────────────────────────────────────────────────
@@ -1369,6 +1622,78 @@ def _fmt_duration(seconds: float) -> str:
     s  = int(seconds)
     ms = int(round((seconds - s) * 1000))
     return f"{s} sec {ms} ms"
+
+
+def _fmt_dhms(seconds: float) -> str:
+    """Format a seconds value as "X days, Y hours, Z minutes, W.WW seconds",
+    always showing all four units (used for the Log Duration overview card)."""
+    days,    rem = divmod(seconds, 86400)
+    hours,   rem = divmod(rem,      3600)
+    minutes, rem = divmod(rem,        60)
+    return (f"{int(days)} days, {int(hours)} hours, "
+            f"{int(minutes)} minutes, {rem:.2f} seconds")
+
+
+def _fmt_min_sec_ms(seconds: float) -> str:
+    """Format a seconds value as 'X mins, Y sec, Z ms' — used for the CPU Time KPI card."""
+    total_ms = int(round(seconds * 1000))
+    m, rem = divmod(total_ms, 60_000)
+    s, ms  = divmod(rem,        1000)
+    return f"{m} mins, {s} sec, {ms} ms"
+
+
+def _fmt_hms(seconds: float) -> str:
+    """Format a seconds value as "Xhr Ymin Zsec Wms", dropping leading zero units."""
+    total_ms = int(round(seconds * 1000))
+    h, rem = divmod(total_ms, 3600_000)
+    m, rem = divmod(rem,    60_000)
+    s, ms  = divmod(rem,    1000)
+    parts = []
+    if h: parts.append(f"{h} hr")
+    if m or h: parts.append(f"{m} min")
+    if s or m or h: parts.append(f"{s} sec")
+    parts.append(f"{ms} ms")
+    return " ".join(parts)
+
+
+def _cpu_stats(events) -> dict:
+    """Total user / sys / CPU (=user+sys) time consumed by GC, summed from each
+    event's `[Times: ...]` (JDK 8) or `[gc,cpu] User=…s Sys=…s` (JDK 9+) line.
+
+    Counts only primary collection pauses (Young / Mixed / Full) to match
+    GCeasy's convention. G1's `Pause Remark` and `Pause Cleanup` phases are
+    excluded because they are coordination phases of a concurrent cycle, not
+    standalone collections — including them inflates the totals by ~10% on
+    workloads with many concurrent cycles.
+
+    Returns ``{"has_data": False, ...}`` with N/A strings when the log doesn't
+    include CPU stats — neither JDK 8 nor JDK 9+ emit them by default, they
+    only appear when -XX:+PrintGCDetails / -Xlog:gc+cpu is configured.
+    """
+    PRIMARY = {"Young", "Mixed", "Full"}
+    users = [e.cpu_user_s for e in events
+             if e.cpu_user_s is not None and e.gc_type in PRIMARY]
+    syss  = [e.cpu_sys_s  for e in events
+             if e.cpu_sys_s  is not None and e.gc_type in PRIMARY]
+
+    if not users and not syss:
+        return {
+            "has_data":      False,
+            "cpu_time":      "N/A",
+            "user_time":     "N/A",
+            "sys_time":      "N/A",
+            "cpu_time_kpi":  "N/A",
+        }
+
+    user_total = sum(users)
+    sys_total  = sum(syss)
+    return {
+        "has_data":      True,
+        "cpu_time":      _fmt_hms(user_total + sys_total),
+        "user_time":     _fmt_hms(user_total),
+        "sys_time":      _fmt_hms(sys_total),
+        "cpu_time_kpi":  _fmt_min_sec_ms(user_total + sys_total),
+    }
 
 
 def _g1_gc_time(events):
@@ -3019,35 +3344,42 @@ def analyze():
     obs   = build_observations(events, stats)
 
     has_data  = any(e.heap_before_kb and e.heap_after_kb for e in events)
-    charts    = {}
-    chart_obs = {"before": [], "after": []}
+    charts          = {}
+    charts_plotly   = {}
+    chart_obs       = {"before": [], "after": []}
     if has_data:
-        charts["before"]    = _heap_chart_b64(events, "before")
-        charts["after"]     = _heap_chart_b64(events, "after")
-        chart_obs["before"] = _chart_obs(events, "before")
-        chart_obs["after"]  = _chart_obs(events, "after")
+        charts["before"]        = _heap_chart_b64(events, "before")
+        charts["after"]         = _heap_chart_b64(events, "after")
+        charts_plotly["before"] = _heap_chart_plotly(events, "before")
+        charts_plotly["after"]  = _heap_chart_plotly(events, "after")
+        chart_obs["before"]     = _chart_obs(events, "before")
+        chart_obs["after"]      = _chart_obs(events, "after")
 
     has_duration = any(e.pause_ms is not None for e in events)
-    gc_duration_chart     = _gc_duration_chart_b64(events) if has_duration else ""
-    gc_duration_chart_obs = _gc_duration_chart_obs(events) if has_duration else []
+    gc_duration_chart        = _gc_duration_chart_b64(events)    if has_duration else ""
+    gc_duration_chart_plotly = _gc_duration_chart_plotly(events) if has_duration else None
+    gc_duration_chart_obs    = _gc_duration_chart_obs(events)    if has_duration else []
 
     has_reclaimed = any(
         e.heap_before_kb and e.heap_after_kb and e.heap_before_kb >= e.heap_after_kb
         for e in events
     )
-    reclaimed_chart     = _reclaimed_chart_b64(events) if has_reclaimed else ""
-    reclaimed_chart_obs = _reclaimed_chart_obs(events) if has_reclaimed else []
+    reclaimed_chart        = _reclaimed_chart_b64(events)    if has_reclaimed else ""
+    reclaimed_chart_plotly = _reclaimed_chart_plotly(events) if has_reclaimed else None
+    reclaimed_chart_obs    = _reclaimed_chart_obs(events)    if has_reclaimed else []
 
     has_pause_gc = any(
         e.pause_ms is not None and e.gc_type not in ("Concurrent", "Unknown")
         for e in events
     )
-    pause_gc_chart     = _pause_gc_chart_b64(events) if has_pause_gc else ""
-    pause_gc_chart_obs = _pause_gc_chart_obs(events) if has_pause_gc else []
+    pause_gc_chart        = _pause_gc_chart_b64(events)    if has_pause_gc else ""
+    pause_gc_chart_plotly = _pause_gc_chart_plotly(events) if has_pause_gc else None
+    pause_gc_chart_obs    = _pause_gc_chart_obs(events)    if has_pause_gc else []
 
     jvm_memory_chart = _jvm_memory_chart_b64(events)
     g1_time   = _g1_gc_time(events)
     g1_phases = _g1_collection_phases(events)
+    cpu_stats = _cpu_stats(events)
 
     all_kpi_keys     = ["throughput", "cpu_time", "latency", "avg_pause", "max_pause", "duration_range"]
     kpi_charts       = {"duration_range": _duration_range_chart_b64(events)}
@@ -3066,22 +3398,27 @@ def analyze():
     _payload = {
         "filename":   f.filename,
         "charts":     charts,
+        "charts_plotly": charts_plotly,
         "chart_obs":  chart_obs,
-        "gc_duration_chart":     gc_duration_chart,
-        "gc_duration_chart_obs": gc_duration_chart_obs,
-        "reclaimed_chart":       reclaimed_chart,
-        "reclaimed_chart_obs":   reclaimed_chart_obs,
+        "gc_duration_chart":        gc_duration_chart,
+        "gc_duration_chart_plotly": gc_duration_chart_plotly,
+        "gc_duration_chart_obs":    gc_duration_chart_obs,
+        "reclaimed_chart":        reclaimed_chart,
+        "reclaimed_chart_plotly": reclaimed_chart_plotly,
+        "reclaimed_chart_obs":    reclaimed_chart_obs,
         "pause_gc_chart":        pause_gc_chart,
+        "pause_gc_chart_plotly": pause_gc_chart_plotly,
         "pause_gc_chart_obs":    pause_gc_chart_obs,
         "jvm_memory_chart":      jvm_memory_chart,
         "g1_time":               g1_time,
+        "cpu_stats":             cpu_stats,
         "g1_phases":             g1_phases,
         "kpi_charts": kpi_charts,
         "kpi_obs":    kpi_obs,
         "kpi_values": kpi_values,
         "overview": [
             {"label": "GC Events Parsed", "value": str(stats["total"])},
-            {"label": "Log Duration",     "value": f"{stats['duration_s']:.1f} s ({stats['duration_s']/60:.1f} min)"},
+            {"label": "Log Duration",     "value": _fmt_dhms(stats['duration_s'])},
             {"label": "Total Pause Time", "value": f"{stats['total_pause_s']:.3f} s"},
             {"label": "App Throughput",   "value": _pct(stats["throughput_pct"])},
             {"label": "GC Rate",          "value": f"{stats['gc_rate_per_min']:.1f} /min" if stats["gc_rate_per_min"] else "N/A"},

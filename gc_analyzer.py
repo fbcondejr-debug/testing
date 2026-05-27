@@ -42,6 +42,11 @@ class GCEvent:
     heap_after_kb: Optional[int] = None
     heap_total_kb: Optional[int] = None
     pause_ms: Optional[float] = None
+    # CPU stats reported per-event (JDK 8 `[Times: user=X sys=Y, real=Z secs]`
+    # or JDK 9+ `[gc,cpu] GC(N) User=Xs Sys=Ys Real=Zs`).
+    cpu_user_s: Optional[float] = None
+    cpu_sys_s:  Optional[float] = None
+    cpu_real_s: Optional[float] = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -147,6 +152,22 @@ _P_JDK8_CONC = re.compile(
 
 _CAUSE_PAT = re.compile(r"\(((?:[^()]*|\([^()]*\))+)\)")
 
+# GC ID, e.g. "GC(123)" — used to correlate JDK 9+ [gc,cpu] lines back to events.
+_GC_ID_PAT = re.compile(r"GC\((\d+)\)")
+
+# JDK 9+ unified-logging CPU stats line, e.g.
+#   [...][gc,cpu] GC(25027) User=0.13s Sys=0.00s Real=0.05s
+_P_GC_CPU = re.compile(
+    r"\[gc,cpu\s*\][^G]*GC\((\d+)\)\s+"
+    r"User=(\d+\.\d+)s\s+Sys=(\d+\.\d+)s\s+Real=(\d+\.\d+)s"
+)
+
+# JDK 8 inline times block, e.g.
+#   [Times: user=0.10 sys=0.01, real=0.05 secs]
+_P_TIMES = re.compile(
+    r"\[Times:\s*user=(\d+\.\d+)\s+sys=(\d+\.\d+),\s*real=(\d+\.\d+)\s*secs\]"
+)
+
 # Wall-clock timestamp patterns (for wrapper logs like tanuki/jsvc)
 # Matches: 2026/02/16 09:01:14  or  2026-02-16 09:01:14  or  2026-02-16T09:01:14
 _WALL_PAT = re.compile(
@@ -164,6 +185,15 @@ def _parse_wall_clock(line: str) -> Optional[float]:
         return dt.timestamp()
     except ValueError:
         return None
+
+
+def _attach_inline_cpu_times(ev: GCEvent, line: str) -> None:
+    """Populate cpu_*_s from a JDK 8 `[Times: user=… sys=… real=…]` block, if present."""
+    m = _P_TIMES.search(line)
+    if m:
+        ev.cpu_user_s = float(m.group(1))
+        ev.cpu_sys_s  = float(m.group(2))
+        ev.cpu_real_s = float(m.group(3))
 
 
 def _parse_line(line: str, line_no: int) -> Optional[GCEvent]:
@@ -200,6 +230,7 @@ def _parse_line(line: str, line_no: int) -> Optional[GCEvent]:
         ev.heap_after_kb = _to_kb(m.group(4))
         ev.heap_total_kb = _to_kb(m.group(5))
         ev.pause_ms = float(m.group(6)) * 1000
+        _attach_inline_cpu_times(ev, line)
         return ev
 
     m = _P_JDK8.search(line)
@@ -212,6 +243,7 @@ def _parse_line(line: str, line_no: int) -> Optional[GCEvent]:
         ev.pause_ms = float(m.group(6)) * 1000
         causes = _CAUSE_PAT.findall(line)
         ev.cause = causes[0] if causes else ""
+        _attach_inline_cpu_times(ev, line)
         return ev
 
     m = _P_JDK9_CONC.search(line)
@@ -238,6 +270,8 @@ def _parse_line(line: str, line_no: int) -> Optional[GCEvent]:
 def parse_log(path: Path) -> Tuple[List[GCEvent], List[str]]:
     events: List[GCEvent] = []
     unmatched: List[str] = []
+    gc_id_to_event: dict = {}  # JDK 9+ correlates [gc,cpu] lines to events by GC(N)
+
     with open(path, encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f, 1):
             line = line.rstrip()
@@ -246,7 +280,22 @@ def parse_log(path: Path) -> Tuple[List[GCEvent], List[str]]:
             ev = _parse_line(line, line_no)
             if ev:
                 events.append(ev)
-            elif re.search(r"\bGC\b", line, re.IGNORECASE):
+                gc_id_m = _GC_ID_PAT.search(line)
+                if gc_id_m:
+                    gc_id_to_event[gc_id_m.group(1)] = ev
+                continue
+
+            # JDK 9+ standalone [gc,cpu] line — attach to its event by GC ID.
+            cpu_m = _P_GC_CPU.search(line)
+            if cpu_m:
+                target = gc_id_to_event.get(cpu_m.group(1))
+                if target is not None:
+                    target.cpu_user_s = float(cpu_m.group(2))
+                    target.cpu_sys_s  = float(cpu_m.group(3))
+                    target.cpu_real_s = float(cpu_m.group(4))
+                continue
+
+            if re.search(r"\bGC\b", line, re.IGNORECASE):
                 unmatched.append(f"line {line_no:>6}: {line[:120]}")
     return events, unmatched
 

@@ -862,6 +862,9 @@
       margin-bottom: .4rem;
     }
   </style>
+
+  <!-- Plotly.js — powers the interactive chart viewer (pan, zoom, reset) -->
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 </head>
 <body>
 
@@ -1123,7 +1126,7 @@
           <option value="pause_gc">Pause GC Duration</option>
         </select>
       </div>
-      <img id="chart-viewer-img" class="chart-img" alt="GC chart">
+      <div id="chart-viewer-plot" class="chart-img" style="width:100%;min-height:380px"></div>
       <div class="chart-obs" id="chart-viewer-obs"></div>
     </div>
 
@@ -1175,6 +1178,16 @@
             <table class="g1-tbl"><tbody id="g1-conc-body"></tbody></table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CPU Stats -->
+    <div id="cpu-stats-section" style="display:none">
+      <div class="section-divider">CPU Stats</div>
+      <div class="card">
+        <table class="g1-tbl">
+          <tbody id="cpu-stats-body"></tbody>
+        </table>
       </div>
     </div>
 
@@ -1358,23 +1371,28 @@
     renderKpiSummary(d);
 
     // ── Charts ─────────────────────────────────────────────
+    // `fig` is the interactive Plotly figure used for display; `src` is the
+    // static PNG fallback that is still referenced by the PDF report path.
     _charts = {
-      after:     { src: d.charts?.after,        obs: d.chart_obs?.after },
-      before:    { src: d.charts?.before,       obs: d.chart_obs?.before },
-      duration:  { src: d.gc_duration_chart,    obs: d.gc_duration_chart_obs },
-      reclaimed: { src: d.reclaimed_chart,      obs: d.reclaimed_chart_obs },
-      pause_gc:  { src: d.pause_gc_chart,       obs: d.pause_gc_chart_obs },
+      after:     { fig: d.charts_plotly?.after,    obs: d.chart_obs?.after },
+      before:    { fig: d.charts_plotly?.before,   obs: d.chart_obs?.before },
+      duration:  { fig: d.gc_duration_chart_plotly, obs: d.gc_duration_chart_obs },
+      reclaimed: { fig: d.reclaimed_chart_plotly,   obs: d.reclaimed_chart_obs },
+      pause_gc:  { fig: d.pause_gc_chart_plotly,    obs: d.pause_gc_chart_obs },
     };
     // Remove options that have no data
     const sel = document.getElementById('chart-selector');
     [...sel.options].forEach(opt => {
-      opt.disabled = !_charts[opt.value]?.src;
+      opt.disabled = !_charts[opt.value]?.fig;
     });
     sel.value = 'after';
-    switchChart();
-    if (Object.values(_charts).some(c => c.src)) {
+    // Show the card BEFORE rendering, otherwise Plotly measures a zero-width
+    // container (display:none) and renders the chart at its 700px fallback.
+    // Defer to the next frame so the browser finishes laying out the card.
+    if (Object.values(_charts).some(c => c.fig)) {
       document.getElementById('chart-viewer-card').style.display = 'block';
     }
+    requestAnimationFrame(switchChart);
 
     // ── JVM Memory Size ────────────────────────────────────
     if (d.jvm_memory_chart) {
@@ -1415,15 +1433,41 @@
       document.getElementById('g1-section').style.display = 'block';
     }
 
+    // ── CPU Stats ──────────────────────────────────────────
+    // Totals across all events; rows show "N/A" when the GC log doesn't
+    // include CPU stats (e.g. no -XX:+PrintGCDetails / -Xlog:gc+cpu).
+    const cpu = d.cpu_stats || { cpu_time: 'N/A', user_time: 'N/A', sys_time: 'N/A' };
+    document.getElementById('cpu-stats-body').innerHTML = [
+      ['CPU Time',  cpu.cpu_time],
+      ['User Time', cpu.user_time],
+      ['Sys Time',  cpu.sys_time],
+    ].map(([l, v]) => `<tr><td>${l}</td><td>${na(v)}</td></tr>`).join('');
+    document.getElementById('cpu-stats-section').style.display = 'block';
+
     show('results');
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // Plotly modebar: Zoom (drag a box) + Pan + Reset view.
+  const _CHART_CONFIG = {
+    modeBarButtons: [['zoom2d', 'pan2d', 'resetScale2d']],
+    displaylogo: false,
+    responsive: true,
+    displayModeBar: true,
+  };
+
   function switchChart() {
-    const key = document.getElementById('chart-selector').value;
-    const c   = _charts[key];
-    if (!c?.src) return;
-    document.getElementById('chart-viewer-img').src = c.src;
+    const key    = document.getElementById('chart-selector').value;
+    const c      = _charts[key];
+    const target = document.getElementById('chart-viewer-plot');
+    if (!c?.fig) {
+      Plotly.purge(target);
+      target.innerHTML = '';
+      document.getElementById('chart-viewer-obs').innerHTML = '';
+      return;
+    }
+    Plotly.react(target, c.fig.data, c.fig.layout, _CHART_CONFIG)
+      .then(() => Plotly.Plots.resize(target));
     document.getElementById('chart-viewer-obs').innerHTML = renderChartObs(c.obs);
   }
 
@@ -1432,8 +1476,9 @@
     document.getElementById('kpi-sum-throughput').textContent =
       tp ? tp.value : (d.overview?.find(o => o.label === 'App Throughput')?.value || 'N/A');
 
-    const cpuOv = d.kpi_values?.cpu_time?.find(v => v.label === 'GC CPU Overhead');
-    document.getElementById('kpi-sum-cpu').textContent = cpuOv ? na(cpuOv.value) : 'N/A';
+    // CPU Time KPI: show the duration "X mins, Y sec, Z ms" from cpu_stats
+    // (was previously the GC CPU Overhead percentage from kpi_values).
+    document.getElementById('kpi-sum-cpu').textContent = d.cpu_stats?.cpu_time_kpi || 'N/A';
 
     const latency = d.kpi_values?.latency || [];
     document.getElementById('kpi-sum-avg').textContent = latency.find(v => v.label === 'Mean')?.value || 'N/A';
@@ -1523,9 +1568,11 @@
     hide('file-pill'); hide('analyze-btn');
     hide('results'); hide('err-box');
     document.getElementById('chart-viewer-card').style.display  = 'none';
+    Plotly.purge(document.getElementById('chart-viewer-plot'));
     document.getElementById('jvm-memory-section').style.display = 'none';
     document.getElementById('g1-phases-section').style.display  = 'none';
     document.getElementById('g1-section').style.display         = 'none';
+    document.getElementById('cpu-stats-section').style.display  = 'none';
     _charts = {};
     document.getElementById('kpi-section').style.display = 'none';
     window.scrollTo({ top: 0, behavior: 'smooth' });

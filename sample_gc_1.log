@@ -1,0 +1,300 @@
+[2.841s][info][gc] GC(0) Pause Young (Normal) (G1 Evacuation Pause) 51M->38M(256M) 7.134ms
+3.416: [GC (Allocation Failure) [PSYoungGen: 67729K->3848K(91750K)] 96757K->38483K(262144K), 0.0117042 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+5.540: [GC pause (G1 Evacuation Pause) (young) 75M->37M(256M), 0.0065733 secs]
+[6.057s][info][gc] GC(3) Pause Young (Normal) (G1 Evacuation Pause) 62M->41M(256M) 20.617ms
+8.950: [GC (Allocation Failure) [PSYoungGen: 62016K->4154K(91750K)] 88595K->41549K(262144K), 0.0055760 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+10.959: [GC pause (G1 Evacuation Pause) (young) 57M->39M(256M), 0.0214924 secs]
+[12.405s][info][gc] GC(6) Pause Young (Normal) (G1 Evacuation Pause) 89M->42M(256M) 24.382ms
+14.349: [GC (Allocation Failure) [PSYoungGen: 67742K->4497K(91750K)] 96775K->44977K(262144K), 0.0218193 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+15.048: [GC pause (G1 Evacuation Pause) (young) 56M->41M(256M), 0.0086559 secs]
+[16.460s][info][gc] GC(9) Pause Young (Normal) (G1 Evacuation Pause) 59M->42M(256M) 16.621ms
+18.580: [GC (Allocation Failure) [PSYoungGen: 47014K->4388K(91750K)] 67163K->43888K(262144K), 0.0235431 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+20.029: [GC pause (G1 Evacuation Pause) (young) 64M->46M(256M), 0.0057583 secs]
+[22.636s][info][gc] GC(12) Pause Young (Normal) (G1 Evacuation Pause) 87M->46M(256M) 17.746ms
+23.805: [GC (Allocation Failure) [PSYoungGen: 49114K->4407K(91750K)] 70163K->44074K(262144K), 0.0092554 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+25.944: [GC pause (G1 Evacuation Pause) (young) 103M->49M(256M), 0.0092376 secs]
+[27.061s][info][gc] GC(15) Pause Young (Normal) (G1 Evacuation Pause) 102M->46M(256M) 8.092ms
+28.559: [GC (Allocation Failure) [PSYoungGen: 51202K->4939K(91750K)] 73147K->49394K(262144K), 0.0226499 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+29.177: [GC pause (G1 Evacuation Pause) (young) 107M->48M(256M), 0.0040909 secs]
+[29.836s][info][gc] GC(18) Pause Young (Normal) (G1 Evacuation Pause) 89M->50M(256M) 11.710ms
+32.488: [GC (Allocation Failure) [PSYoungGen: 77588K->4998K(91750K)] 110840K->49981K(262144K), 0.0243348 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+33.655: [GC pause (G1 Evacuation Pause) (young) 94M->50M(256M), 0.0143503 secs]
+[36.539s][info][gc] GC(21) Pause Young (Normal) (G1 Evacuation Pause) 65M->48M(256M) 12.436ms
+39.321: [GC (Allocation Failure) [PSYoungGen: 53002K->5123K(91750K)] 75718K->51239K(262144K), 0.0061090 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+40.203: [GC pause (G1 Evacuation Pause) (young) 76M->51M(256M), 0.0160063 secs]
+[40.704s][info][gc] GC(24) Pause Young (Normal) (G1 Evacuation Pause) 88M->53M(256M) 14.198ms
+43.284: [GC (Allocation Failure) [PSYoungGen: 45706K->5646K(91750K)] 65295K->56460K(262144K), 0.0222106 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+43.998: [GC pause (G1 Evacuation Pause) (young) 66M->55M(256M), 0.0237798 secs]
+[44.819s][info][gc] GC(27) Pause Young (Normal) (G1 Evacuation Pause) 67M->54M(256M) 19.614ms
+46.377: [GC (Allocation Failure) [PSYoungGen: 65220K->5232K(91750K)] 93172K->52327K(262144K), 0.0220660 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+47.656: [GC pause (G1 Evacuation Pause) (young) 90M->55M(256M), 0.0066265 secs]
+[48.458s][info][gc] GC(30) Pause Full (System.gc()) 96M->49M(256M) 219.745ms
+49.509: [GC (Allocation Failure) [PSYoungGen: 58830K->5646K(91750K)] 84044K->56468K(262144K), 0.0072926 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+52.158: [GC pause (G1 Evacuation Pause) (young) 96M->52M(256M), 0.0228247 secs]
+[52.989s][info][gc] GC(33) Pause Young (Normal) (G1 Evacuation Pause) 77M->56M(256M) 6.927ms
+55.507: [GC (Allocation Failure) [PSYoungGen: 67855K->5668K(91750K)] 96937K->56686K(262144K), 0.0200462 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+57.175: [GC pause (G1 Evacuation Pause) (young) 71M->55M(256M), 0.0117423 secs]
+[58.682s][info][gc] GC(36) Pause Young (Normal) (G1 Evacuation Pause) 100M->60M(256M) 4.264ms
+60.303: [GC (Allocation Failure) [PSYoungGen: 78975K->5599K(91750K)] 112822K->55993K(262144K), 0.0063748 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+61.911: [GC pause (G1 Evacuation Pause) (young) 82M->55M(256M), 0.0232351 secs]
+[64.501s][info][gc] GC(39) Pause Young (Normal) (G1 Evacuation Pause) 96M->53M(256M) 24.983ms
+66.215: [GC (Allocation Failure) [PSYoungGen: 82604K->6337K(91750K)] 118007K->63373K(262144K), 0.0058252 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+69.178: [GC pause (G1 Evacuation Pause) (young) 89M->55M(256M), 0.0107164 secs]
+[72.072s][info][gc] GC(42) Pause Young (Normal) (G1 Evacuation Pause) 108M->58M(256M) 11.729ms
+73.313: [GC (Allocation Failure) [PSYoungGen: 70672K->6366K(91750K)] 100961K->63663K(262144K), 0.0055603 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+73.956: [GC pause (G1 Evacuation Pause) (young) 100M->61M(256M), 0.0192034 secs]
+[76.858s][info][gc] GC(45) Pause Young (Normal) (G1 Evacuation Pause) 97M->64M(256M) 5.621ms
+77.946: [GC (Allocation Failure) [PSYoungGen: 58830K->6405K(91750K)] 84043K->64056K(262144K), 0.0175299 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+79.995: [GC pause (G1 Evacuation Pause) (young) 116M->59M(256M), 0.0156739 secs]
+[81.005s][info][gc] GC(48) Pause Young (Normal) (G1 Evacuation Pause) 102M->62M(256M) 23.498ms
+82.255: [GC (Allocation Failure) [PSYoungGen: 61625K->6341K(91750K)] 88037K->63417K(262144K), 0.0174489 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+85.252: [GC pause (G1 Evacuation Pause) (young) 111M->59M(256M), 0.0125406 secs]
+[88.085s][info][gc] GC(51) Pause Young (Normal) (G1 Evacuation Pause) 79M->61M(256M) 8.100ms
+90.669: [GC (Allocation Failure) [PSYoungGen: 85386K->6498K(91750K)] 121980K->64985K(262144K), 0.0056282 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+91.189: [GC pause (G1 Evacuation Pause) (young) 106M->70M(256M), 0.0170415 secs]
+[92.024s][info][gc] GC(54) Pause Young (Normal) (G1 Evacuation Pause) 92M->67M(256M) 23.595ms
+94.036: [GC (Allocation Failure) [PSYoungGen: 59464K->6841K(91750K)] 84949K->68413K(262144K), 0.0082640 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+95.758: [GC pause (G1 Evacuation Pause) (young) 88M->68M(256M), 0.0080716 secs]
+[96.949s][info][gc] GC(57) Pause Young (Normal) (G1 Evacuation Pause) 120M->63M(256M) 11.742ms
+99.303: [GC (Allocation Failure) [PSYoungGen: 83809K->7085K(91750K)] 119728K->70857K(262144K), 0.0080250 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+102.010: [GC pause (G1 Evacuation Pause) (young) 100M->63M(256M), 0.0037306 secs]
+[102.881s][info][gc] GC(60) Pause Full (System.gc()) 107M->66M(256M) 237.278ms
+105.532: [GC (Allocation Failure) [PSYoungGen: 68693K->7525K(91750K)] 98134K->75256K(262144K), 0.0203108 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+107.983: [GC pause (G1 Evacuation Pause) (young) 91M->67M(256M), 0.0043643 secs]
+[110.807s][info][gc] GC(63) Pause Young (Normal) (G1 Evacuation Pause) 102M->71M(256M) 5.555ms
+111.369: [GC (Allocation Failure) [PSYoungGen: 93603K->7652K(91750K)] 133719K->76528K(262144K), 0.0222726 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+114.029: [GC pause (G1 Evacuation Pause) (young) 99M->76M(256M), 0.0204514 secs]
+[116.710s][info][gc] GC(66) Pause Young (Normal) (G1 Evacuation Pause) 97M->75M(256M) 4.486ms
+117.973: [GC (Allocation Failure) [PSYoungGen: 68650K->7868K(91750K)] 98072K->78681K(262144K), 0.0125870 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+119.293: [GC pause (G1 Evacuation Pause) (young) 96M->68M(256M), 0.0064420 secs]
+[120.793s][info][gc] GC(69) Pause Young (Normal) (G1 Evacuation Pause) 133M->72M(256M) 16.754ms
+123.719: [GC (Allocation Failure) [PSYoungGen: 81160K->8236K(91750K)] 115944K->82369K(262144K), 0.0046529 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+125.305: [GC pause (G1 Evacuation Pause) (young) 134M->72M(256M), 0.0044933 secs]
+[126.768s][info][gc] GC(72) Pause Young (Normal) (G1 Evacuation Pause) 103M->77M(256M) 13.763ms
+129.582: [GC (Allocation Failure) [PSYoungGen: 72351K->8113K(91750K)] 103359K->81132K(262144K), 0.0020389 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+130.993: [GC pause (G1 Evacuation Pause) (young) 124M->80M(256M), 0.0174245 secs]
+[133.613s][info][gc] GC(75) Pause Young (Normal) (G1 Evacuation Pause) 121M->75M(256M) 9.220ms
+135.119: [GC (Allocation Failure) [PSYoungGen: 74923K->7762K(91750K)] 107034K->77621K(262144K), 0.0113930 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+137.312: [GC pause (G1 Evacuation Pause) (young) 96M->77M(256M), 0.0236284 secs]
+[137.813s][info][gc] GC(78) Pause Young (Normal) (G1 Evacuation Pause) 121M->76M(256M) 14.603ms
+139.475: [GC (Allocation Failure) [PSYoungGen: 80501K->8242K(91750K)] 115002K->82422K(262144K), 0.0170582 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+141.965: [GC pause (G1 Evacuation Pause) (young) 102M->79M(256M), 0.0227272 secs]
+[143.303s][info][gc] GC(81) Pause Young (Normal) (G1 Evacuation Pause) 96M->80M(256M) 16.558ms
+144.301: [GC (Allocation Failure) [PSYoungGen: 92764K->8504K(91750K)] 132521K->85043K(262144K), 0.0071667 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+144.983: [GC pause (G1 Evacuation Pause) (young) 104M->80M(256M), 0.0215440 secs]
+[146.719s][info][gc] GC(84) Pause Young (Normal) (G1 Evacuation Pause) 124M->77M(256M) 18.016ms
+149.144: [GC (Allocation Failure) [PSYoungGen: 90142K->7744K(91750K)] 128775K->77447K(262144K), 0.0192722 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+150.939: [GC pause (G1 Evacuation Pause) (young) 114M->78M(256M), 0.0240332 secs]
+[153.443s][info][gc] GC(87) Pause Young (Normal) (G1 Evacuation Pause) 106M->86M(256M) 12.499ms
+156.171: [GC (Allocation Failure) [PSYoungGen: 102522K->8613K(91750K)] 146460K->86135K(262144K), 0.0238509 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+158.041: [GC pause (G1 Evacuation Pause) (young) 130M->83M(256M), 0.0211031 secs]
+[159.159s][info][gc] GC(90) Pause Full (System.gc()) 132M->77M(256M) 149.982ms
+160.346: [GC (Allocation Failure) [PSYoungGen: 96070K->8701K(91750K)] 137243K->87013K(262144K), 0.0164152 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+162.196: [GC pause (G1 Evacuation Pause) (young) 110M->81M(256M), 0.0093533 secs]
+[162.857s][info][gc] GC(93) Pause Young (Normal) (G1 Evacuation Pause) 108M->87M(256M) 18.248ms
+164.407: [GC (Allocation Failure) [PSYoungGen: 88939K->8654K(91750K)] 127056K->86541K(262144K), 0.0067572 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+166.821: [GC pause (G1 Evacuation Pause) (young) 126M->88M(256M), 0.0217048 secs]
+[169.455s][info][gc] GC(96) Pause Young (Normal) (G1 Evacuation Pause) 99M->84M(256M) 19.330ms
+171.463: [GC (Allocation Failure) [PSYoungGen: 85973K->9298K(91750K)] 122819K->92982K(262144K), 0.0145610 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+172.803: [GC pause (G1 Evacuation Pause) (young) 110M->86M(256M), 0.0026676 secs]
+[173.622s][info][gc] GC(99) Pause Young (Normal) (G1 Evacuation Pause) 120M->83M(256M) 12.750ms
+174.190: [GC (Allocation Failure) [PSYoungGen: 73309K->8956K(91750K)] 104728K->89561K(262144K), 0.0149810 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+175.638: [GC pause (G1 Evacuation Pause) (young) 108M->88M(256M), 0.0031565 secs]
+[178.018s][info][gc] GC(102) Pause Young (Normal) (G1 Evacuation Pause) 117M->93M(256M) 10.720ms
+179.866: [GC (Allocation Failure) [PSYoungGen: 82322K->8665K(91750K)] 117603K->86658K(262144K), 0.0024458 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+181.996: [GC pause (G1 Evacuation Pause) (young) 120M->93M(256M), 0.0199684 secs]
+[182.876s][info][gc] GC(105) Pause Young (Normal) (G1 Evacuation Pause) 150M->87M(256M) 2.469ms
+185.125: [GC (Allocation Failure) [PSYoungGen: 98131K->9522K(91750K)] 140188K->95226K(262144K), 0.0070132 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+185.911: [GC pause (G1 Evacuation Pause) (young) 113M->94M(256M), 0.0192023 secs]
+[187.191s][info][gc] GC(108) Pause Young (Normal) (G1 Evacuation Pause) 152M->87M(256M) 2.591ms
+187.881: [GC (Allocation Failure) [PSYoungGen: 109606K->9467K(91750K)] 156581K->94676K(262144K), 0.0184453 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+190.507: [GC pause (G1 Evacuation Pause) (young) 137M->88M(256M), 0.0197671 secs]
+[191.875s][info][gc] GC(111) Pause Young (Normal) (G1 Evacuation Pause) 113M->102M(256M) 20.001ms
+194.499: [GC (Allocation Failure) [PSYoungGen: 90182K->9788K(91750K)] 128832K->97886K(262144K), 0.0098483 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+197.071: [GC pause (G1 Evacuation Pause) (young) 113M->102M(256M), 0.0166185 secs]
+[198.246s][info][gc] GC(114) Pause Young (Normal) (G1 Evacuation Pause) 130M->100M(256M) 24.206ms
+200.574: [GC (Allocation Failure) [PSYoungGen: 97449K->9949K(91750K)] 139213K->99494K(262144K), 0.0120182 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+203.278: [GC pause (G1 Evacuation Pause) (young) 151M->102M(256M), 0.0039932 secs]
+[203.849s][info][gc] GC(117) Pause Young (Normal) (G1 Evacuation Pause) 133M->99M(256M) 10.717ms
+205.200: [GC (Allocation Failure) [PSYoungGen: 85969K->9665K(91750K)] 122813K->96650K(262144K), 0.0203501 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+208.070: [GC pause (G1 Evacuation Pause) (young) 146M->96M(256M), 0.0022335 secs]
+[210.297s][info][gc] GC(120) Pause Full (System.gc()) 147M->91M(256M) 284.704ms
+211.351: [GC (Allocation Failure) [PSYoungGen: 97880K->10728K(91750K)] 139829K->107282K(262144K), 0.0041402 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+213.178: [GC pause (G1 Evacuation Pause) (young) 128M->102M(256M), 0.0128850 secs]
+[214.356s][info][gc] GC(123) Pause Young (Normal) (G1 Evacuation Pause) 150M->98M(256M) 18.166ms
+216.195: [GC (Allocation Failure) [PSYoungGen: 85918K->9911K(91750K)] 122740K->99119K(262144K), 0.0047498 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+218.507: [GC pause (G1 Evacuation Pause) (young) 123M->97M(256M), 0.0131366 secs]
+[219.492s][info][gc] GC(126) Pause Young (Normal) (G1 Evacuation Pause) 140M->99M(256M) 4.312ms
+220.678: [GC (Allocation Failure) [PSYoungGen: 89220K->9786K(91750K)] 127458K->97867K(262144K), 0.0142851 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+223.349: [GC pause (G1 Evacuation Pause) (young) 143M->107M(256M), 0.0049044 secs]
+[224.950s][info][gc] GC(129) Pause Young (Normal) (G1 Evacuation Pause) 159M->105M(256M) 12.796ms
+227.505: [GC (Allocation Failure) [PSYoungGen: 85849K->11460K(91750K)] 122642K->114604K(262144K), 0.0129878 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+228.378: [GC pause (G1 Evacuation Pause) (young) 121M->107M(256M), 0.0032330 secs]
+[230.789s][info][gc] GC(132) Pause Young (Normal) (G1 Evacuation Pause) 133M->113M(256M) 4.724ms
+232.416: [GC (Allocation Failure) [PSYoungGen: 112805K->10423K(91750K)] 161151K->104231K(262144K), 0.0140192 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+234.468: [GC pause (G1 Evacuation Pause) (young) 161M->114M(256M), 0.0090237 secs]
+[235.496s][info][gc] GC(135) Pause Young (Normal) (G1 Evacuation Pause) 155M->114M(256M) 6.779ms
+236.003: [GC (Allocation Failure) [PSYoungGen: 91764K->10486K(91750K)] 131092K->104868K(262144K), 0.0037265 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+238.270: [GC pause (G1 Evacuation Pause) (young) 149M->104M(256M), 0.0073240 secs]
+[240.740s][info][gc] GC(138) Pause Young (Normal) (G1 Evacuation Pause) 143M->111M(256M) 23.250ms
+242.601: [GC (Allocation Failure) [PSYoungGen: 110575K->11950K(91750K)] 157965K->119508K(262144K), 0.0117782 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+243.516: [GC pause (G1 Evacuation Pause) (young) 166M->115M(256M), 0.0036424 secs]
+[244.327s][info][gc] GC(141) Pause Young (Normal) (G1 Evacuation Pause) 159M->111M(256M) 8.638ms
+246.061: [GC (Allocation Failure) [PSYoungGen: 113033K->12131K(91750K)] 161477K->121313K(262144K), 0.0135109 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+247.187: [GC pause (G1 Evacuation Pause) (young) 125M->109M(256M), 0.0094134 secs]
+[250.064s][info][gc] GC(144) Pause Young (Normal) (G1 Evacuation Pause) 170M->117M(256M) 15.230ms
+252.455: [GC (Allocation Failure) [PSYoungGen: 112984K->11077K(91750K)] 161406K->110774K(262144K), 0.0029253 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+254.418: [GC pause (G1 Evacuation Pause) (young) 157M->119M(256M), 0.0061743 secs]
+[255.751s][info][gc] GC(147) Pause Young (Normal) (G1 Evacuation Pause) 149M->106M(256M) 10.003ms
+256.972: [GC (Allocation Failure) [PSYoungGen: 120639K->11341K(91750K)] 172342K->113419K(262144K), 0.0179545 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+258.258: [GC pause (G1 Evacuation Pause) (young) 166M->115M(256M), 0.0124610 secs]
+[261.228s][info][gc] GC(150) Pause Full (System.gc()) 174M->104M(256M) 218.941ms
+262.633: [GC (Allocation Failure) [PSYoungGen: 110837K->11660K(91750K)] 158339K->116602K(262144K), 0.0063144 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+264.506: [GC pause (G1 Evacuation Pause) (young) 159M->120M(256M), 0.0066818 secs]
+[267.439s][info][gc] GC(153) Pause Young (Normal) (G1 Evacuation Pause) 150M->120M(256M) 4.793ms
+269.319: [GC (Allocation Failure) [PSYoungGen: 101603K->11379K(91750K)] 145148K->113792K(262144K), 0.0146693 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+270.113: [GC pause (G1 Evacuation Pause) (young) 178M->124M(256M), 0.0126133 secs]
+[271.297s][info][gc] GC(156) Pause Young (Normal) (G1 Evacuation Pause) 155M->122M(256M) 13.704ms
+272.756: [GC (Allocation Failure) [PSYoungGen: 128694K->11691K(91750K)] 183850K->116918K(262144K), 0.0146791 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+273.946: [GC pause (G1 Evacuation Pause) (young) 157M->126M(256M), 0.0218726 secs]
+[276.498s][info][gc] GC(159) Pause Young (Normal) (G1 Evacuation Pause) 153M->128M(256M) 13.678ms
+278.222: [GC (Allocation Failure) [PSYoungGen: 106092K->12511K(91750K)] 151561K->125119K(262144K), 0.0249748 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+280.080: [GC pause (G1 Evacuation Pause) (young) 160M->117M(256M), 0.0146941 secs]
+[282.010s][info][gc] GC(162) Pause Young (Normal) (G1 Evacuation Pause) 149M->115M(256M) 18.042ms
+284.273: [GC (Allocation Failure) [PSYoungGen: 123559K->11579K(91750K)] 176513K->115798K(262144K), 0.0191282 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+287.225: [GC pause (G1 Evacuation Pause) (young) 154M->125M(256M), 0.0208772 secs]
+[289.899s][info][gc] GC(165) Pause Young (Normal) (G1 Evacuation Pause) 137M->122M(256M) 15.574ms
+292.205: [GC (Allocation Failure) [PSYoungGen: 113160K->12690K(91750K)] 161658K->126906K(262144K), 0.0125093 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+295.128: [GC pause (G1 Evacuation Pause) (young) 168M->117M(256M), 0.0127983 secs]
+[297.759s][info][gc] GC(168) Pause Young (Normal) (G1 Evacuation Pause) 171M->127M(256M) 21.591ms
+300.158: [GC (Allocation Failure) [PSYoungGen: 112144K->12431K(91750K)] 160206K->124317K(262144K), 0.0185305 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+302.960: [GC pause (G1 Evacuation Pause) (young) 140M->117M(256M), 0.0165167 secs]
+[305.044s][info][gc] GC(171) Pause Young (Normal) (G1 Evacuation Pause) 175M->125M(256M) 4.264ms
+305.659: [GC (Allocation Failure) [PSYoungGen: 115943K->13399K(91750K)] 165633K->133997K(262144K), 0.0227788 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+307.487: [GC pause (G1 Evacuation Pause) (young) 155M->125M(256M), 0.0053481 secs]
+[310.164s][info][gc] GC(174) Pause Young (Normal) (G1 Evacuation Pause) 179M->121M(256M) 3.816ms
+311.817: [GC (Allocation Failure) [PSYoungGen: 110094K->14023K(91750K)] 157278K->140230K(262144K), 0.0052917 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+314.570: [GC pause (G1 Evacuation Pause) (young) 154M->119M(256M), 0.0205066 secs]
+[316.539s][info][gc] GC(177) Pause Young (Normal) (G1 Evacuation Pause) 150M->128M(256M) 9.948ms
+317.537: [GC (Allocation Failure) [PSYoungGen: 117595K->12823K(91750K)] 167993K->128231K(262144K), 0.0214420 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+319.474: [GC pause (G1 Evacuation Pause) (young) 167M->125M(256M), 0.0151542 secs]
+[320.660s][info][gc] GC(180) Pause Full (System.gc()) 158M->127M(256M) 257.722ms
+322.676: [GC (Allocation Failure) [PSYoungGen: 127981K->14016K(91750K)] 182831K->140162K(262144K), 0.0031280 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+324.694: [GC pause (G1 Evacuation Pause) (young) 189M->128M(256M), 0.0203738 secs]
+[326.996s][info][gc] GC(183) Pause Young (Normal) (G1 Evacuation Pause) 177M->135M(256M) 17.589ms
+329.112: [GC (Allocation Failure) [PSYoungGen: 134373K->13923K(91750K)] 191962K->139238K(262144K), 0.0227783 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+329.838: [GC pause (G1 Evacuation Pause) (young) 168M->135M(256M), 0.0188443 secs]
+[331.686s][info][gc] GC(186) Pause Young (Normal) (G1 Evacuation Pause) 183M->127M(256M) 5.040ms
+332.828: [GC (Allocation Failure) [PSYoungGen: 124692K->14683K(91750K)] 178132K->146832K(262144K), 0.0211009 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+334.175: [GC pause (G1 Evacuation Pause) (young) 172M->141M(256M), 0.0191709 secs]
+[336.826s][info][gc] GC(189) Pause Young (Normal) (G1 Evacuation Pause) 195M->128M(256M) 24.230ms
+338.240: [GC (Allocation Failure) [PSYoungGen: 141528K->14964K(91750K)] 202184K->149643K(262144K), 0.0205055 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+340.422: [GC pause (G1 Evacuation Pause) (young) 150M->137M(256M), 0.0124601 secs]
+[341.193s][info][gc] GC(192) Pause Young (Normal) (G1 Evacuation Pause) 179M->144M(256M) 23.627ms
+343.981: [GC (Allocation Failure) [PSYoungGen: 109238K->14952K(91750K)] 156055K->149529K(262144K), 0.0149124 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+345.237: [GC pause (G1 Evacuation Pause) (young) 154M->145M(256M), 0.0229159 secs]
+[346.968s][info][gc] GC(195) Pause Young (Normal) (G1 Evacuation Pause) 158M->148M(256M) 9.000ms
+349.144: [GC (Allocation Failure) [PSYoungGen: 140140K->13422K(91750K)] 200200K->134221K(262144K), 0.0124338 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+350.031: [GC pause (G1 Evacuation Pause) (young) 199M->137M(256M), 0.0190722 secs]
+[352.910s][info][gc] GC(198) Pause Young (Normal) (G1 Evacuation Pause) 158M->139M(256M) 11.387ms
+355.548: [GC (Allocation Failure) [PSYoungGen: 122973K->14222K(91750K)] 175676K->142221K(262144K), 0.0238628 secs] [Times: user=0.05 sys=0.00, real=0.02 secs]
+356.945: [GC pause (G1 Evacuation Pause) (young) 187M->141M(256M), 0.0244904 secs]
+[358.582s][info][gc] GC(201) Pause Young (Normal) (G1 Evacuation Pause) 163M->132M(256M) 21.505ms
+361.049: [GC (Allocation Failure) [PSYoungGen: 133370K->14689K(91750K)] 190529K->146896K(262144K), 0.0024912 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+363.461: [GC pause (G1 Evacuation Pause) (young) 161M->143M(256M), 0.0035780 secs]
+[364.330s][info][gc] GC(204) Pause Young (Normal) (G1 Evacuation Pause) 165M->150M(256M) 9.557ms
+365.155: [GC (Allocation Failure) [PSYoungGen: 111996K->15416K(91750K)] 159995K->154163K(262144K), 0.0053278 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+365.693: [GC pause (G1 Evacuation Pause) (young) 164M->146M(256M), 0.0025929 secs]
+[366.324s][info][gc] GC(207) Pause Young (Normal) (G1 Evacuation Pause) 168M->139M(256M) 6.008ms
+368.769: [GC (Allocation Failure) [PSYoungGen: 131478K->15331K(91750K)] 187826K->153317K(262144K), 0.0129537 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+369.377: [GC pause (G1 Evacuation Pause) (young) 163M->144M(256M), 0.0237446 secs]
+[372.287s][info][gc] GC(210) Pause Full (System.gc()) 201M->134M(256M) 203.671ms
+374.013: [GC (Allocation Failure) [PSYoungGen: 130818K->14685K(91750K)] 186883K->146853K(262144K), 0.0177802 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+374.677: [GC pause (G1 Evacuation Pause) (young) 163M->136M(256M), 0.0159908 secs]
+[377.663s][info][gc] GC(213) Pause Young (Normal) (G1 Evacuation Pause) 191M->147M(256M) 9.479ms
+379.918: [GC (Allocation Failure) [PSYoungGen: 131072K->15314K(91750K)] 187247K->153142K(262144K), 0.0042811 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+380.955: [GC pause (G1 Evacuation Pause) (young) 193M->153M(256M), 0.0185793 secs]
+[382.495s][info][gc] GC(216) Pause Young (Normal) (G1 Evacuation Pause) 173M->144M(256M) 12.430ms
+383.377: [GC (Allocation Failure) [PSYoungGen: 131136K->15596K(91750K)] 187338K->155963K(262144K), 0.0106089 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+384.118: [GC pause (G1 Evacuation Pause) (young) 166M->156M(256M), 0.0041443 secs]
+[386.022s][info][gc] GC(219) Pause Young (Normal) (G1 Evacuation Pause) 203M->151M(256M) 15.489ms
+388.398: [GC (Allocation Failure) [PSYoungGen: 121732K->15038K(91750K)] 173904K->150382K(262144K), 0.0173028 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+389.777: [GC pause (G1 Evacuation Pause) (young) 199M->161M(256M), 0.0158094 secs]
+[390.548s][info][gc] GC(222) Pause Young (Normal) (G1 Evacuation Pause) 175M->155M(256M) 7.158ms
+393.066: [GC (Allocation Failure) [PSYoungGen: 131700K->16206K(91750K)] 188144K->162065K(262144K), 0.0152043 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+395.173: [GC pause (G1 Evacuation Pause) (young) 214M->160M(256M), 0.0161122 secs]
+[396.124s][info][gc] GC(225) Pause Young (Normal) (G1 Evacuation Pause) 212M->160M(256M) 8.151ms
+398.798: [GC (Allocation Failure) [PSYoungGen: 130730K->15340K(91750K)] 186758K->153400K(262144K), 0.0021404 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+399.375: [GC pause (G1 Evacuation Pause) (young) 187M->145M(256M), 0.0165630 secs]
+[400.800s][info][gc] GC(228) Pause Young (Normal) (G1 Evacuation Pause) 178M->152M(256M) 9.841ms
+401.432: [GC (Allocation Failure) [PSYoungGen: 148377K->16070K(91750K)] 211968K->160702K(262144K), 0.0039540 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+403.586: [GC pause (G1 Evacuation Pause) (young) 199M->159M(256M), 0.0082584 secs]
+[404.371s][info][gc] GC(231) Pause Young (Normal) (G1 Evacuation Pause) 191M->150M(256M) 19.364ms
+406.539: [GC (Allocation Failure) [PSYoungGen: 131971K->16466K(91750K)] 188531K->164660K(262144K), 0.0131926 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+407.792: [GC pause (G1 Evacuation Pause) (young) 189M->159M(256M), 0.0021768 secs]
+[408.312s][info][gc] GC(234) Pause Young (Normal) (G1 Evacuation Pause) 177M->151M(256M) 9.547ms
+410.062: [GC (Allocation Failure) [PSYoungGen: 129047K->15845K(91750K)] 184354K->158455K(262144K), 0.0181844 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+410.668: [GC pause (G1 Evacuation Pause) (young) 211M->147M(256M), 0.0218206 secs]
+[412.602s][info][gc] GC(237) Pause Young (Normal) (G1 Evacuation Pause) 217M->167M(256M) 15.242ms
+413.914: [GC (Allocation Failure) [PSYoungGen: 138593K->15328K(91750K)] 197990K->153282K(262144K), 0.0024797 secs] [Times: user=0.00 sys=0.00, real=0.00 secs]
+414.634: [GC pause (G1 Evacuation Pause) (young) 203M->167M(256M), 0.0231547 secs]
+[416.123s][info][gc] GC(240) Pause Full (System.gc()) 186M->149M(256M) 221.470ms
+417.899: [GC (Allocation Failure) [PSYoungGen: 137097K->16042K(91750K)] 195853K->160427K(262144K), 0.0058671 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+420.218: [GC pause (G1 Evacuation Pause) (young) 199M->171M(256M), 0.0100356 secs]
+[421.211s][info][gc] GC(243) Pause Young (Normal) (G1 Evacuation Pause) 215M->155M(256M) 5.368ms
+423.643: [GC (Allocation Failure) [PSYoungGen: 152885K->17011K(91750K)] 218408K->170112K(262144K), 0.0060744 secs] [Times: user=0.01 sys=0.00, real=0.01 secs]
+426.454: [GC pause (G1 Evacuation Pause) (young) 213M->169M(256M), 0.0123248 secs]
+[428.522s][info][gc] GC(246) Pause Young (Normal) (G1 Evacuation Pause) 208M->166M(256M) 21.878ms
+429.708: [GC (Allocation Failure) [PSYoungGen: 129595K->16594K(91750K)] 185136K->165940K(262144K), 0.0089649 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+430.351: [GC pause (G1 Evacuation Pause) (young) 202M->158M(256M), 0.0123940 secs]
+[432.388s][info][gc] GC(249) Pause Young (Normal) (G1 Evacuation Pause) 182M->173M(256M) 21.672ms
+435.128: [GC (Allocation Failure) [PSYoungGen: 144405K->17023K(91750K)] 206293K->170239K(262144K), 0.0202118 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+436.817: [GC pause (G1 Evacuation Pause) (young) 218M->169M(256M), 0.0093951 secs]
+[438.175s][info][gc] GC(252) Pause Young (Normal) (G1 Evacuation Pause) 182M->155M(256M) 22.680ms
+439.770: [GC (Allocation Failure) [PSYoungGen: 146840K->16160K(91750K)] 209772K->161608K(262144K), 0.0076981 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+440.977: [GC pause (G1 Evacuation Pause) (young) 206M->157M(256M), 0.0105756 secs]
+[443.095s][info][gc] GC(255) Pause Young (Normal) (G1 Evacuation Pause) 197M->169M(256M) 20.152ms
+445.405: [GC (Allocation Failure) [PSYoungGen: 133291K->17600K(91750K)] 190417K->176000K(262144K), 0.0085354 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+447.362: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 138961K->132188K(170393K)] 231602K->165236K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.1700077 secs] [Times: user=0.51 sys=0.00, real=0.17 secs]
+[448.841s][info][gc] GC(258) Pause Young (Normal) (G1 Evacuation Pause) 199M->180M(256M) 18.065ms
+451.321: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 140415K->124832K(170393K)] 234026K->156040K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.1817034 secs] [Times: user=0.55 sys=0.00, real=0.18 secs]
+453.534: [GC pause (G1 Evacuation Pause) (young) 216M->177M(256M), 0.0189918 secs]
+[454.941s][info][gc] GC(261) Pause Young (Normal) (G1 Evacuation Pause) 215M->167M(256M) 10.322ms
+456.007: [GC (Allocation Failure) [PSYoungGen: 139541K->18616K(91750K)] 199345K->186165K(262144K), 0.0131842 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+458.434: [GC pause (G1 Evacuation Pause) (young) 188M->179M(256M), 0.0043262 secs]
+[460.850s][info][gc] GC(264) Pause Full (System.gc()) 228M->149M(256M) 170.926ms
+463.278: [GC (Allocation Failure) [PSYoungGen: 146112K->16628K(91750K)] 208732K->166285K(262144K), 0.0211209 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+465.469: [GC pause (G1 Evacuation Pause) (young) 194M->170M(256M), 0.0114497 secs]
+[467.091s][info][gc] GC(267) Pause Young (Normal) (G1 Evacuation Pause) 208M->166M(256M) 19.216ms
+469.679: [GC (Allocation Failure) [PSYoungGen: 144841K->18530K(91750K)] 206917K->185307K(262144K), 0.0127874 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+470.883: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 143532K->137989K(170393K)] 239220K->172487K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.2046536 secs] [Times: user=0.61 sys=0.00, real=0.20 secs]
+[473.386s][info][gc] GC(270) Pause Full (System.gc()) 213M->168M(256M) 300.561ms
+475.273: [GC (Allocation Failure) [PSYoungGen: 143553K->18187K(91750K)] 205076K->181877K(262144K), 0.0221047 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+[477.680s][info][gc] GC(272) Pause Full (System.gc()) 229M->166M(256M) 156.967ms
+480.546: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 143079K->126735K(170393K)] 238465K->158419K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.1981176 secs] [Times: user=0.59 sys=0.00, real=0.20 secs]
+481.180: [GC (Allocation Failure) [PSYoungGen: 151262K->17480K(91750K)] 216089K->174803K(262144K), 0.0026134 secs] [Times: user=0.01 sys=0.00, real=0.00 secs]
+481.750: [GC pause (G1 Evacuation Pause) (young) 200M->188M(256M), 0.0106230 secs]
+[482.594s][info][gc] GC(276) Pause Full (System.gc()) 231M->165M(256M) 293.673ms
+484.858: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 141991K->136222K(170393K)] 236652K->170278K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.1174740 secs] [Times: user=0.35 sys=0.00, real=0.12 secs]
+487.445: [GC pause (G1 Evacuation Pause) (young) 191M->165M(256M), 0.0078863 secs]
+488.666: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 139513K->134449K(170393K)] 232523K->168062K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.1100205 secs] [Times: user=0.33 sys=0.00, real=0.11 secs]
+490.308: [GC (Allocation Failure) [PSYoungGen: 139250K->17963K(91750K)] 198929K->179635K(262144K), 0.0202597 secs] [Times: user=0.04 sys=0.00, real=0.02 secs]
+492.097: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 144703K->135947K(170393K)] 241172K->169934K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.0844375 secs] [Times: user=0.25 sys=0.00, real=0.08 secs]
+[493.198s][info][gc] GC(282) Pause Young (Normal) (G1 Evacuation Pause) 199M->176M(256M) 16.141ms
+493.867: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 138492K->128853K(170393K)] 230820K->161067K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.3431567 secs] [Times: user=1.03 sys=0.00, real=0.34 secs]
+495.343: [GC pause (G1 Evacuation Pause) (young) 218M->192M(256M), 0.0147455 secs]
+[495.884s][info][gc] GC(285) Pause Young (Normal) (G1 Evacuation Pause) 224M->192M(256M) 7.834ms
+498.313: [GC (Allocation Failure) [PSYoungGen: 151558K->19115K(91750K)] 216512K->191153K(262144K), 0.0164499 secs] [Times: user=0.03 sys=0.00, real=0.02 secs]
+500.847: [GC pause (G1 Evacuation Pause) (young) 211M->168M(256M), 0.0145583 secs]
+[502.926s][info][gc] GC(288) Pause Full (System.gc()) 233M->166M(256M) 267.755ms
+504.160: [GC (Allocation Failure) [PSYoungGen: 142841K->19404K(91750K)] 204059K->194040K(262144K), 0.0125266 secs] [Times: user=0.03 sys=0.00, real=0.01 secs]
+505.948: [GC pause (G1 Evacuation Pause) (young) 206M->169M(256M), 0.0234675 secs]
+[506.926s][info][gc] GC(291) Pause Young (Normal) (G1 Evacuation Pause) 223M->175M(256M) 19.326ms
+[507.737s][info][gc] GC(292) Pause Full (System.gc()) 235M->175M(256M) 169.620ms
+509.204: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 144703K->142536K(170393K)] 241172K->178171K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.3215521 secs] [Times: user=0.96 sys=0.00, real=0.32 secs]
+[511.002s][info][gc] GC(294) Pause Young (Normal) (G1 Evacuation Pause) 222M->184M(256M) 23.259ms
+513.558: [Full GC (Ergonomics) [PSYoungGen: 0K->0K(91750K)] [ParOldGen: 144345K->133296K(170393K)] 240575K->166620K(262144K), [Metaspace: 45000K->45000K(1105920K)], 0.2426624 secs] [Times: user=0.73 sys=0.00, real=0.24 secs]
+514.824: [GC pause (G1 Evacuation Pause) (young) 215M->173M(256M), 0.0172011 secs]
+[515.430s][info][gc] GC(297) Pause Young (Normal) (G1 Evacuation Pause) 221M->191M(256M) 10.086ms
+518.380: [GC (Allocation Failure) [PSYoungGen: 156560K->20577K(91750K)] 223658K->205778K(262144K), 0.0083148 secs] [Times: user=0.02 sys=0.00, real=0.01 secs]
+520.883: [GC pause (G1 Evacuation Pause) (young) 205M->191M(256M), 0.0103562 secs]
